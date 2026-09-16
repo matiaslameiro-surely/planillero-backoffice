@@ -1,0 +1,18 @@
+// Tokens de diseño. Todo color, espaciado o radio sale de acá: nada se escribe a mano en los
+// componentes. Es la misma convención que usa base-frontend.
+//
+// Es un conjunto mínimo a propósito: el sistema de diseño está fuera del alcance del esqueleto.
+
+$color-primario: #208aef;
+$color-borde: #d9d9d9;
+$color-ok: #1a9e5c;
+$color-error: #c0392b;
+
+$espaciado-chico: 0.5rem;
+$espaciado-medio: 1rem;
+$espaciado-grande: 1.5rem;
+
+$radio-chico: 0.5rem;
+$radio-medio: 0.75rem;
+
+$tipografia-base: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

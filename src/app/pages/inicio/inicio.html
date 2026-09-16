@@ -1,0 +1,34 @@
+<main class="inicio">
+  <h1 class="inicio__titulo">Planillero</h1>
+  <p class="inicio__subtitulo">Backoffice</p>
+
+  <section class="inicio__tarjeta">
+    <p class="inicio__etiqueta">Conexión con el backend</p>
+
+    @let e = estado();
+    @if (e.tipo === 'consultando') {
+      <p class="inicio__estado">Consultando…</p>
+    } @else if (e.resultado.estado === 'conectado') {
+      <p class="inicio__estado">
+        <span class="inicio__punto inicio__punto--ok"></span>
+        Conectado
+      </p>
+    } @else {
+      <p class="inicio__estado">
+        <span class="inicio__punto inicio__punto--error"></span>
+        Sin conexión
+      </p>
+      <p class="inicio__motivo">{{ e.resultado.motivo }}</p>
+    }
+
+    <p class="inicio__url">{{ urlApi }}</p>
+  </section>
+
+  <button
+    type="button"
+    class="inicio__boton"
+    (click)="consultar()"
+    [disabled]="e.tipo === 'consultando'">
+    Reintentar
+  </button>
+</main>
