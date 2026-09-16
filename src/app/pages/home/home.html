@@ -1,0 +1,47 @@
+<main class="home">
+  <h1 class="home__title">Planillero</h1>
+  <p class="home__subtitle">Backoffice</p>
+
+  @let u = user();
+  <section class="home__card">
+    <p class="home__label">Sesión</p>
+    <p class="home__value">{{ u?.username }}</p>
+    <p class="home__hint">Roles: {{ u?.roles?.join(', ') }}</p>
+  </section>
+
+  <section class="home__card">
+    <p class="home__label">Conexión con el backend</p>
+
+    @let h = health();
+    @if (h.kind === 'checking') {
+      <p class="home__value">Consultando…</p>
+    } @else if (h.result.status === 'connected') {
+      <p class="home__value">
+        <span class="home__dot home__dot--ok"></span>
+        Conectado
+      </p>
+    } @else {
+      <p class="home__value">
+        <span class="home__dot home__dot--error"></span>
+        Sin conexión
+      </p>
+      <p class="home__hint">{{ h.result.reason }}</p>
+    }
+
+    <p class="home__url">{{ apiUrl }}</p>
+  </section>
+
+  <div class="home__actions">
+    <button
+      type="button"
+      class="home__button"
+      (click)="check()"
+      [disabled]="h.kind === 'checking'">
+      Reintentar
+    </button>
+
+    <button type="button" class="home__button home__button--ghost" (click)="signOut()">
+      Cerrar sesión
+    </button>
+  </div>
+</main>
