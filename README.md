@@ -4,8 +4,10 @@ Backoffice web de Planillero. Angular 22 con TypeScript estricto y SCSS.
 
 ## Requisitos
 
-**Node 22.12+ o 24.15+.** Angular 22 no construye con Node 23 ni con un Node 24 anterior al 24.15; si
-el build falla con un error raro de módulos, mirá primero la versión de Node.
+**Node 22.22.3+ o 24.15+** — el rango exacto que declaran `@angular/cli`, `@angular/build` y
+`@angular/core`, y que está en `engines` del `package.json` y en `.nvmrc`. Un Node 23, o un 22 o 24
+anterior a esos, no construye el proyecto; si el build falla con un error raro de módulos, mirá
+primero la versión de Node.
 
 Los tests corren con **Vitest sobre jsdom**, así que **no hace falta ningún navegador instalado**.
 (Angular ya no genera Karma.)
