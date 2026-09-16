@@ -1,0 +1,21 @@
+# Finales de línea normalizados a LF dentro del repo, pase lo que pase en cada máquina.
+* text=auto eol=lf
+
+*.ts   text eol=lf
+*.js   text eol=lf
+*.html text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.sh   text eol=lf
+
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary

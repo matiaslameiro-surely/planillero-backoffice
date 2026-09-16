@@ -1,0 +1,91 @@
+@use '../../styles/variables' as *;
+
+.inicio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: $espaciado-grande;
+  font-family: $tipografia-base;
+
+  &__titulo {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  &__subtitulo {
+    margin: 0 0 $espaciado-grande;
+    opacity: 0.6;
+  }
+
+  &__tarjeta {
+    width: 100%;
+    max-width: 26rem;
+    padding: $espaciado-medio;
+    border: 1px solid $color-borde;
+    border-radius: $radio-medio;
+  }
+
+  &__etiqueta {
+    margin: 0 0 $espaciado-chico;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+  }
+
+  &__estado {
+    display: flex;
+    align-items: center;
+    gap: $espaciado-chico;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  &__punto {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+
+    &--ok {
+      background-color: $color-ok;
+    }
+
+    &--error {
+      background-color: $color-error;
+    }
+  }
+
+  &__motivo {
+    margin: $espaciado-chico 0 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  &__url {
+    margin: $espaciado-chico 0 0;
+    font-family: monospace;
+    font-size: 0.75rem;
+    opacity: 0.5;
+  }
+
+  &__boton {
+    margin-top: $espaciado-grande;
+    padding: 0.75rem 1.75rem;
+    border: none;
+    border-radius: $radio-chico;
+    background-color: $color-primario;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
