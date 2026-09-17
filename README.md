@@ -30,6 +30,36 @@ npm run lint        # ESLint; los warnings también fallan
 npm test            # tests con Vitest
 ```
 
+## Autenticación
+
+El backoffice implementa el login administrativo completo contra los endpoints del backend:
+
+- **Login**: `POST /auth/login` → si el usuario tiene 2FA, segundo paso con `POST /auth/verify-2fa`.
+- **Tokens**: access token en **memoria** (no persiste al recargar); refresh token en **`localStorage`** (con fallback en memoria si no hay `localStorage`, p.ej. en tests/Vitest).
+- **`HttpInterceptor` funcional** (`src/app/core/interceptors/auth.interceptor.ts`):
+  - Adjunta `Authorization: Bearer <accessToken>` en cada petición.
+  - Ante `401` por expiración, **refresca una sola vez** (cola compartida para evitar golpes paralelos a `/auth/refresh`), reintenta la petición original y actualiza los tokens.
+  - Si el refresh falla (revocado, expirado, ya usado), cierra la sesión y redirige a `/login`.
+- **Guardas de navegación** (`canActivate` funcional):
+  - `authenticatedGuard`: sin sesión → `/login`.
+  - `anonymousGuard`: con sesión → `/` (home).
+- **Restauración de sesión** al arrancar: `GET /auth/me` con el access token (si existe en memoria) o intentando refresh con el refresh token guardado. Así recargar la pestaña no tira al login si la sesión sigue viva.
+- **Cierre de sesión**: `POST /auth/logout` revoca el refresh token y limpia memoria + `localStorage`.
+- **2FA**: página de login con paso para código TOTP; desde la sesión autenticada se puede habilitar/deshabilitar 2FA (`/auth/2fa/setup`, `/auth/2fa/enable`, `/auth/2fa/disable`).
+
+### Archivos clave
+
+| Archivo | Qué hace |
+|---|---|
+| `src/app/core/services/auth.service.ts` | `login`, `verify2fa`, `refresh`, `logout`, `me`; mantiene la sesión (usuario, roles, tokens). |
+| `src/app/core/services/token-store.service.ts` | Access token en memoria, refresh en `localStorage` (fallback memoria). |
+| `src/app/core/interceptors/auth.interceptor.ts` | Bearer + refresh compartido ante 401 + reintento; logout si refresh falla. |
+| `src/app/core/guards/authenticated.guard.ts` | Protege rutas privadas: sin sesión → `/login`. |
+| `src/app/core/guards/anonymous.guard.ts` | Protege `/login`: con sesión → `/`. |
+| `src/app/core/models/auth.model.ts` | Tipos: tokens, sesión, roles, resultados de login/2FA. |
+| `src/app/pages/login/` | `login.ts`, `login.html`, `login.scss` — formulario + paso 2FA. |
+| `src/app/pages/home/` | `home.ts`, `home.html`, `home.scss` — usuario/roles, `/salud`, cerrar sesión. |
+
 ## Conexión con el backend
 
 La pantalla inicial consulta `GET /salud` del backend y muestra si hay conexión. Es el diagnóstico más
@@ -39,29 +69,52 @@ La URL sale de `src/app/environments/environment.ts`, y el build de producción 
 `environment.prod.ts` mediante `fileReplacements` en `angular.json`. El código importa siempre
 `environment`: no hay condicionales de entorno repartidos por ahí.
 
-El backend todavía no está desplegado en ningún servidor, así que hoy sólo corre local:
+El backend corre local:
 
 ```bash
 cd ../backend && ./mvnw spring-boot:run
 ```
 
-## Estructura
+### Verificar el flujo completo
 
-Replica la de `base-frontend`, la plantilla Angular del equipo:
+1. Levantar backend y backoffice (`npm start`).
+2. Abrir `http://localhost:4200` → redirige a `/login`.
+3. Ingresar `operador.demo / Operador123!` → entra a home (sin 2FA), muestra usuario/rol y estado de `/salud`.
+4. Cerrar sesión → vuelve a `/login`.
+5. Ingresar `supervisor.demo / Supervisor123!` tras haber habilitado 2FA → pide código TOTP → tras código correcto, entra a home.
+6. Recargar la pestaña (F5): la sesión se restaura vía `GET /auth/me` (o refresh) y no pide login de nuevo.
+7. Esperar a que expire el access token (15 min) → una petición dispara refresh automático, reintenta y sigue funcionando.
+
+## Estructura
 
 ```
 src/app/
 ├── core/                 # lo transversal, una sola instancia por aplicación
 │   ├── guards/
+│   │   ├── authenticated.guard.ts    # sin sesión → /login
+│   │   └── anonymous.guard.ts        # con sesión → /
 │   ├── interceptors/
-│   ├── models/           # salud.model.ts
-│   └── services/         # salud.service.ts
-│       └── __tests__/    # los specs de core/ van al lado, en su subcarpeta
+│   │   └── auth.interceptor.ts       # Bearer + refresh compartido + reintento
+│   ├── models/
+│   │   ├── auth.model.ts             # tokens, sesión, roles, login/2FA results
+│   │   └── health.model.ts           # respuesta de /salud
+│   └── services/
+│       ├── auth.service.ts           # login, verify2fa, refresh, logout, me
+│       ├── token-store.service.ts    # access en memoria, refresh en localStorage
+│       └── health.service.ts         # GET /salud
 ├── shared/               # componentes, pipes y utilidades reutilizables
 ├── pages/                # una carpeta por feature, con carga diferida
-│   └── inicio/
-├── environments/         # un archivo por entorno
-└── styles/               # tokens de diseño (_variables.scss)
+│   ├── login/
+│   │   ├── login.ts
+│   │   ├── login.html
+│   │   └── login.scss
+│   └── home/
+│       ├── home.ts
+│       ├── home.html
+│       └── home.scss
+├── environments/         # un archivo por entorno (environment.ts, environment.prod.ts)
+├── styles/               # tokens de diseño (_variables.scss)
+└── app.routes.ts         # rutas '' (protegida) y 'login' (anónima) con guards, carga diferida
 ```
 
 **No se clonó `base-frontend`**: esa plantilla trae autenticación contra el gateway corporativo, y
@@ -81,12 +134,6 @@ es lo que sirve, y no lo que ata a otro sistema.
   sin tocar los servicios.
 - **Componentes con `ChangeDetectionStrategy.OnPush`** y estado con signals.
 
-## Lo que todavía no hay
-
-- **Autenticación.** El backend no la tiene todavía; hasta entonces el backoffice sólo puede mostrar
-  pantallas públicas. Es una tarea propia.
-- Biblioteca de componentes y sistema de diseño: hay tokens mínimos, nada más.
-
 ## Cómo se trabaja en este repo
 
 Este repo se clona **dentro** del workspace del harness, no suelto:
@@ -99,5 +146,5 @@ planillero/          # repo del harness: protocolo, specs y scripts
 ```
 
 Las tareas salen de Jira y se llevan por el ciclo que describe `AGENTS.md` en ese repo. El push directo
-a `main` está bloqueado por un hook: el trabajo va en una rama `PLAN-<n>-<slug>` y entra por pull
-request.
+a `main` está bloqueado por un hook: el trabajo va en una rama `PLAN-<n>-<slug>` y entra por
+pull request.
