@@ -19,7 +19,7 @@ import { TokenStoreService } from './token-store.service';
 /** Estado de la sesión. `loading` es el arranque, mientras se intenta restaurar la sesión guardada. */
 export type SessionStatus = 'loading' | 'signedOut' | 'signedIn';
 
-/** Respuesta cruda de `POST /auth/login`. */
+/** Respuesta cruda de `POST /api/v1/auth/login`. */
 interface LoginResponse {
   twoFactorRequired: boolean;
   challengeId?: string;
@@ -49,7 +49,7 @@ export class AuthService {
   /** Inicia sesión con usuario y contraseña. */
   login(username: string, password: string): Observable<LoginResult> {
     return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { username, password })
+      .post<LoginResponse>(`${environment.apiUrl}/api/v1/auth/login`, { username, password })
       .pipe(
         map((response): LoginResult => {
           if (response.twoFactorRequired) {
@@ -78,7 +78,7 @@ export class AuthService {
   /** Completa el login con el código TOTP, guarda los tokens y carga el usuario. */
   verifyTwoFactor(challengeId: string, code: string): Observable<SessionUser> {
     return this.http
-      .post<Tokens>(`${environment.apiUrl}/auth/verify-2fa`, { challengeId, code })
+      .post<Tokens>(`${environment.apiUrl}/api/v1/auth/verify-2fa`, { challengeId, code })
       .pipe(switchMap((tokens) => this.startSession(tokens)));
   }
 
@@ -86,7 +86,7 @@ export class AuthService {
    * Restaura la sesión si hace falta y devuelve el usuario.
    *
    * Es lo que usan las guardas: al entrar a una ruta protegida, si todavía no hay usuario intenta
-   * `GET /auth/me` con el refresh token guardado.
+   * `GET /api/v1/auth/me` con el refresh token guardado.
    */
   ensureSession(): Observable<SessionUser | null> {
     if (this.status() === 'signedIn') {
@@ -115,7 +115,7 @@ export class AuthService {
    * Renueva la sesión con el refresh token.
    *
    * Comparte una sola petición entre todos los que la pidan a la vez: si varias respuestas llegan
-   * con 401 al mismo tiempo, se golpea `/auth/refresh` una vez y no una por request.
+   * con 401 al mismo tiempo, se golpea `/api/v1/auth/refresh` una vez y no una por request.
    */
   refresh(): Observable<Tokens> {
     if (!this.refreshInFlight$) {
@@ -125,7 +125,7 @@ export class AuthService {
         return throwError(() => new Error('No hay refresh token.'));
       }
       this.refreshInFlight$ = this.http
-        .post<Tokens>(`${environment.apiUrl}/auth/refresh`, { refreshToken })
+        .post<Tokens>(`${environment.apiUrl}/api/v1/auth/refresh`, { refreshToken })
         .pipe(
           tap((tokens) => this.store.set(tokens)),
           catchError((error: unknown) => {
@@ -145,7 +145,7 @@ export class AuthService {
   logout(): Observable<void> {
     const refreshToken = this.store.getRefreshToken();
     const request$ = refreshToken
-      ? this.http.post<void>(`${environment.apiUrl}/auth/logout`, { refreshToken })
+      ? this.http.post<void>(`${environment.apiUrl}/api/v1/auth/logout`, { refreshToken })
       : of(undefined);
 
     return request$.pipe(
@@ -156,7 +156,7 @@ export class AuthService {
   }
 
   private fetchUser(): Observable<SessionUser> {
-    return this.http.get<SessionUser>(`${environment.apiUrl}/auth/me`).pipe(
+    return this.http.get<SessionUser>(`${environment.apiUrl}/api/v1/auth/me`).pipe(
       tap((user) => {
         this.user.set(user);
         this.status.set('signedIn');

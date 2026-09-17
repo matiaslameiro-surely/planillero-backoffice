@@ -39,7 +39,7 @@ describe('AuthService', () => {
     let result: LoginResult | undefined;
     service.login('operador.demo', 'Operador123!').subscribe((r) => (result = r));
 
-    const request = httpMock.expectOne(`${apiUrl}/auth/login`);
+    const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/login`);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ username: 'operador.demo', password: 'Operador123!' });
     request.flush({ twoFactorRequired: false, accessToken: 'a1', refreshToken: 'r1' });
@@ -54,7 +54,7 @@ describe('AuthService', () => {
     let result: LoginResult | undefined;
     service.login('admin.demo', 'Admin123!').subscribe((r) => (result = r));
 
-    httpMock.expectOne(`${apiUrl}/auth/login`).flush({ twoFactorRequired: true, challengeId: 'c1' });
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/login`).flush({ twoFactorRequired: true, challengeId: 'c1' });
 
     expect(result).toEqual({ twoFactorRequired: true, challengeId: 'c1' });
   });
@@ -65,7 +65,7 @@ describe('AuthService', () => {
       .startSession({ accessToken: 'a1', refreshToken: 'r1' })
       .subscribe((u) => (user = u));
 
-    httpMock.expectOne(`${apiUrl}/auth/me`).flush(me);
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush(me);
 
     expect(user).toEqual(me);
     expect(store.getAccessToken()).toBe('a1');
@@ -76,10 +76,10 @@ describe('AuthService', () => {
   it('completa el 2FA con los tokens y el usuario', () => {
     service.verifyTwoFactor('c1', '123456').subscribe();
 
-    const request = httpMock.expectOne(`${apiUrl}/auth/verify-2fa`);
+    const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/verify-2fa`);
     expect(request.request.body).toEqual({ challengeId: 'c1', code: '123456' });
     request.flush({ accessToken: 'a2', refreshToken: 'r2' });
-    httpMock.expectOne(`${apiUrl}/auth/me`).flush(me);
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush(me);
 
     expect(store.getAccessToken()).toBe('a2');
     expect(service.status()).toBe('signedIn');
@@ -98,7 +98,7 @@ describe('AuthService', () => {
     let user: SessionUser | null | undefined;
     service.ensureSession().subscribe((u) => (user = u));
 
-    httpMock.expectOne(`${apiUrl}/auth/me`).flush(me);
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush(me);
 
     expect(user).toEqual(me);
     expect(service.status()).toBe('signedIn');
@@ -109,7 +109,7 @@ describe('AuthService', () => {
     let user: SessionUser | null | undefined;
     service.ensureSession().subscribe((u) => (user = u));
 
-    httpMock.expectOne(`${apiUrl}/auth/me`).flush({}, { status: 401, statusText: 'Unauthorized' });
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(user).toBeNull();
     expect(store.getRefreshToken()).toBeNull();
@@ -121,7 +121,7 @@ describe('AuthService', () => {
     let tokens: Tokens | undefined;
     service.refresh().subscribe((t) => (tokens = t));
 
-    const request = httpMock.expectOne(`${apiUrl}/auth/refresh`);
+    const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/refresh`);
     expect(request.request.body).toEqual({ refreshToken: 'r1' });
     request.flush({ accessToken: 'nuevo', refreshToken: 'r2' });
 
@@ -135,7 +135,7 @@ describe('AuthService', () => {
     let done = false;
     service.logout().subscribe(() => (done = true));
 
-    httpMock.expectOne(`${apiUrl}/auth/logout`).flush({}, { status: 500, statusText: 'Error' });
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/logout`).flush({}, { status: 500, statusText: 'Error' });
 
     expect(done).toBe(true);
     expect(store.getRefreshToken()).toBeNull();

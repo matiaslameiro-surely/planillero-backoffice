@@ -38,18 +38,18 @@ describe('authInterceptor', () => {
 
   it('adjunta el Bearer del access token', () => {
     store.set({ accessToken: 'a1', refreshToken: 'r1' });
-    http.get(`${apiUrl}/auth/me`).subscribe();
+    http.get(`${apiUrl}/api/v1/auth/me`).subscribe();
 
-    const request = httpMock.expectOne(`${apiUrl}/auth/me`);
+    const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/me`);
     expect(request.request.headers.get('Authorization')).toBe('Bearer a1');
     request.flush({});
   });
 
   it('no adjunta Bearer en el login', () => {
     store.set({ accessToken: 'a1', refreshToken: 'r1' });
-    http.post(`${apiUrl}/auth/login`, {}).subscribe();
+    http.post(`${apiUrl}/api/v1/auth/login`, {}).subscribe();
 
-    const request = httpMock.expectOne(`${apiUrl}/auth/login`);
+    const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/login`);
     expect(request.request.headers.has('Authorization')).toBe(false);
     request.flush({});
   });
@@ -57,16 +57,16 @@ describe('authInterceptor', () => {
   it('ante un 401 renueva la sesión y reintenta la petición', () => {
     store.set({ accessToken: 'viejo', refreshToken: 'r1' });
     let result: unknown;
-    http.get(`${apiUrl}/auth/me`).subscribe((r) => (result = r));
+    http.get(`${apiUrl}/api/v1/auth/me`).subscribe((r) => (result = r));
 
     httpMock
-      .expectOne(`${apiUrl}/auth/me`)
+      .expectOne(`${apiUrl}/api/v1/auth/me`)
       .flush({}, { status: 401, statusText: 'Unauthorized' });
     httpMock
-      .expectOne(`${apiUrl}/auth/refresh`)
+      .expectOne(`${apiUrl}/api/v1/auth/refresh`)
       .flush({ accessToken: 'nuevo', refreshToken: 'r2' });
 
-    const retry = httpMock.expectOne(`${apiUrl}/auth/me`);
+    const retry = httpMock.expectOne(`${apiUrl}/api/v1/auth/me`);
     expect(retry.request.headers.get('Authorization')).toBe('Bearer nuevo');
     retry.flush({ username: 'admin.demo' });
 
@@ -76,13 +76,13 @@ describe('authInterceptor', () => {
   it('si el refresh falla, propaga el error y cierra la sesión', () => {
     store.set({ accessToken: 'viejo', refreshToken: 'r1' });
     let error: unknown;
-    http.get(`${apiUrl}/auth/me`).subscribe({ error: (e) => (error = e) });
+    http.get(`${apiUrl}/api/v1/auth/me`).subscribe({ error: (e) => (error = e) });
 
     httpMock
-      .expectOne(`${apiUrl}/auth/me`)
+      .expectOne(`${apiUrl}/api/v1/auth/me`)
       .flush({}, { status: 401, statusText: 'Unauthorized' });
     httpMock
-      .expectOne(`${apiUrl}/auth/refresh`)
+      .expectOne(`${apiUrl}/api/v1/auth/refresh`)
       .flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(error).toBeTruthy();
