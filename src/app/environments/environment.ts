@@ -6,7 +6,7 @@
  * repartidos por el código.
  */
 export const environment = {
-  produccion: false,
+  production: false,
   /** URL base del backend, sin barra final. */
-  urlApi: 'http://localhost:8080',
+  apiUrl: 'http://localhost:8080',
 };

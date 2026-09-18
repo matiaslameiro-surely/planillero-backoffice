@@ -5,6 +5,6 @@
  * este es el archivo a tocar.
  */
 export const environment = {
-  produccion: true,
-  urlApi: 'http://localhost:8080',
+  production: true,
+  apiUrl: 'http://localhost:8080',
 };

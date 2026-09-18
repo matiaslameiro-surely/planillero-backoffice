@@ -1,57 +1,58 @@
 @use '../../styles/variables' as *;
 
-.inicio {
+.home {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: $espaciado-grande;
-  font-family: $tipografia-base;
+  padding: $spacing-lg;
+  font-family: $font-base;
 
-  &__titulo {
+  &__title {
     margin: 0;
     font-size: 2rem;
     font-weight: 700;
   }
 
-  &__subtitulo {
-    margin: 0 0 $espaciado-grande;
+  &__subtitle {
+    margin: 0 0 $spacing-lg;
     opacity: 0.6;
   }
 
-  &__tarjeta {
+  &__card {
     width: 100%;
     max-width: 26rem;
-    padding: $espaciado-medio;
-    border: 1px solid $color-borde;
-    border-radius: $radio-medio;
+    margin-bottom: $spacing-md;
+    padding: $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
   }
 
-  &__etiqueta {
-    margin: 0 0 $espaciado-chico;
+  &__label {
+    margin: 0 0 $spacing-sm;
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     opacity: 0.6;
   }
 
-  &__estado {
+  &__value {
     display: flex;
     align-items: center;
-    gap: $espaciado-chico;
+    gap: $spacing-sm;
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
   }
 
-  &__punto {
+  &__dot {
     width: 0.625rem;
     height: 0.625rem;
     border-radius: 50%;
 
     &--ok {
-      background-color: $color-ok;
+      background-color: $color-success;
     }
 
     &--error {
@@ -59,25 +60,30 @@
     }
   }
 
-  &__motivo {
-    margin: $espaciado-chico 0 0;
+  &__hint {
+    margin: $spacing-sm 0 0;
     font-size: 0.85rem;
     opacity: 0.7;
   }
 
   &__url {
-    margin: $espaciado-chico 0 0;
+    margin: $spacing-sm 0 0;
     font-family: monospace;
     font-size: 0.75rem;
     opacity: 0.5;
   }
 
-  &__boton {
-    margin-top: $espaciado-grande;
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+    margin-top: $spacing-lg;
+  }
+
+  &__button {
     padding: 0.75rem 1.75rem;
     border: none;
-    border-radius: $radio-chico;
-    background-color: $color-primario;
+    border-radius: $radius-sm;
+    background-color: $color-primary;
     color: #fff;
     font-size: 1rem;
     font-weight: 600;
@@ -86,6 +92,12 @@
     &:disabled {
       opacity: 0.6;
       cursor: default;
+    }
+
+    &--ghost {
+      background-color: transparent;
+      border: 1px solid $color-border;
+      color: $color-primary;
     }
   }
 }

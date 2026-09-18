@@ -1,0 +1,69 @@
+<main class="login">
+  <h1 class="login__title">Planillero</h1>
+  <p class="login__subtitle">
+    @if (step() === 'credentials') {
+      Iniciá sesión
+    } @else {
+      Ingresá el código de verificación
+    }
+  </p>
+
+  @if (step() === 'credentials') {
+    <form class="login__card" [formGroup]="credentials" (ngSubmit)="submitCredentials()">
+      <label class="login__label" for="username">Usuario</label>
+      <input
+        id="username"
+        class="login__input"
+        type="text"
+        formControlName="username"
+        autocomplete="username"
+        [attr.aria-invalid]="credentials.controls.username.touched && credentials.controls.username.invalid" />
+
+      <label class="login__label" for="password">Contraseña</label>
+      <input
+        id="password"
+        class="login__input"
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+        [attr.aria-invalid]="credentials.controls.password.touched && credentials.controls.password.invalid" />
+
+      @if (error()) {
+        <p class="login__error" role="alert">{{ error() }}</p>
+      }
+
+      <button class="login__button" type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          Entrando…
+        } @else {
+          Entrar
+        }
+      </button>
+    </form>
+  } @else {
+    <form class="login__card" [formGroup]="twoFactor" (ngSubmit)="submitCode()">
+      <label class="login__label" for="code">Código de 6 dígitos</label>
+      <input
+        id="code"
+        class="login__input"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        formControlName="code"
+        autocomplete="one-time-code"
+        [attr.aria-invalid]="twoFactor.controls.code.touched && twoFactor.controls.code.invalid" />
+
+      @if (error()) {
+        <p class="login__error" role="alert">{{ error() }}</p>
+      }
+
+      <button class="login__button" type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          Verificando…
+        } @else {
+          Verificar
+        }
+      </button>
+    </form>
+  }
+</main>
