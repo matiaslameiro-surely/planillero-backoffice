@@ -21,5 +21,11 @@ export const routes: Routes = [
     canActivate: [authenticatedGuard],
     loadComponent: () => import('./pages/home/home').then((m) => m.Home),
   },
+  {
+    path: 'evidence/:visitId',
+    canActivate: [authenticatedGuard],
+    loadComponent: () =>
+      import('./pages/evidence-viewer/evidence-viewer').then((m) => m.EvidenceViewer),
+  },
   { path: '**', redirectTo: '' },
 ];
