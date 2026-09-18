@@ -1,3 +1,12 @@
 /* Estilos globales de la aplicación y hojas de estilo de dependencias externas. */
 
 @import 'leaflet/dist/leaflet.css';
+
+/* Global utility and status badge styles (PLAN-10: evidencias) */
+.status-pill{padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.status-verified{background:#dcfce7;color:#15803d}
+.status-tampered{background:#fee2e2;color:#b91c1c}
+.status-pending{background:#fef3c7;color:#b45309}
+.audit-report{margin-top:14px;padding:12px;border-radius:8px;border:1px solid}
+.audit-ok{background:#f0fdf4;border-color:#86efac;color:#14532d}
+.audit-alert{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}

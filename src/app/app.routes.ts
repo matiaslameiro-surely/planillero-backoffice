@@ -33,5 +33,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/access-denied/access-denied').then((m) => m.AccessDenied),
   },
+  {
+    path: 'evidence/:visitId',
+    canActivate: [authenticatedGuard],
+    loadComponent: () =>
+      import('./pages/evidence-viewer/evidence-viewer').then((m) => m.EvidenceViewer),
+  },
   { path: '**', redirectTo: '' },
 ];

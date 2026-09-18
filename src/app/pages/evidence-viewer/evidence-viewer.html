@@ -1,0 +1,193 @@
+<div class="evidence-page">
+  <header class="page-header">
+    <a routerLink="/" class="back-link">← Volver al Panel</a>
+    <div class="header-content">
+      <h1>Supervisión de Evidencias Digitales</h1>
+      <span class="visit-badge">Visita: {{ visitId() }}</span>
+    </div>
+  </header>
+
+  <!-- Panel de Auditoría y Manifiesto Criptográfico -->
+  <section class="manifest-card">
+    <div class="manifest-header">
+      <div class="title-status">
+        <h2>Cadena de Custodia y Manifiesto</h2>
+        @if (manifest(); as m) {
+          <span
+            class="status-pill"
+            [class.status-verified]="m.verificationStatus === 'VERIFIED'"
+            [class.status-tampered]="m.verificationStatus === 'TAMPERED'"
+          >
+            {{ m.verificationStatus }}
+          </span>
+        } @else {
+          <span class="status-pill status-pending">PENDIENTE DE SELLADO</span>
+        }
+      </div>
+
+      <button
+        class="verify-btn"
+        (click)="verify()"
+        [disabled]="verifying() || !manifest()"
+      >
+        {{ verifying() ? 'Auditando...' : 'Verificar Integridad Criptográfica' }}
+      </button>
+    </div>
+
+    @if (manifest(); as m) {
+      <div class="manifest-meta">
+        <div class="meta-item">
+          <span class="meta-label">Firma Digital (HMAC-SHA256):</span>
+          <code class="meta-hash">{{ m.hmacSignature }}</code>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Dispositivo:</span>
+          <span>{{ m.deviceInfo || 'No informado' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Fecha de Sellado:</span>
+          <span>{{ m.createdAt | date: 'medium' }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Diagnóstico de Verificación pericial -->
+    @if (verification(); as v) {
+      <div
+        class="audit-report"
+        [class.audit-ok]="v.status === 'VERIFIED'"
+        [class.audit-alert]="v.status === 'TAMPERED'"
+      >
+        <div class="audit-summary">
+          <span class="audit-icon">{{ v.status === 'VERIFIED' ? '🛡️' : '⚠️' }}</span>
+          <div>
+            <strong>{{ v.status === 'VERIFIED' ? 'INTEGRIDAD COMPLETA VERIFICADA' : 'ALERTA DE MANIPULACIÓN (TAMPERED)' }}</strong>
+            <p>{{ v.message }}</p>
+          </div>
+        </div>
+
+        @if (v.evidences.length > 0) {
+          <div class="audit-details-table">
+            <div class="table-header">
+              <span>Evidencia ID</span>
+              <span>SHA-256 Esperado</span>
+              <span>SHA-256 Almacenado</span>
+              <span>Estado</span>
+            </div>
+            @for (ev of v.evidences; track ev.evidenceId) {
+              <div class="table-row" [class.row-tampered]="!ev.intact">
+                <code>{{ ev.evidenceId.substring(0, 8) }}...</code>
+                <code class="hash-cell">{{ ev.sha256Expected.substring(0, 16) }}...</code>
+                <code class="hash-cell">{{ ev.sha256Actual.substring(0, 16) }}...</code>
+                <span class="evidence-status" [class.status-intact]="ev.intact">
+                  {{ ev.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Galería de Evidencias Digitales -->
+  <section class="gallery-section">
+    <h2>Evidencias Custodiadas ({{ evidences().length }})</h2>
+
+    @if (loading()) {
+      <div class="loading-box">Cargando evidencias periciales...</div>
+    } @else if (evidences().length === 0) {
+      <div class="empty-box">No se han registrado evidencias para esta visita.</div>
+    } @else {
+      <div class="evidence-grid">
+        @for (item of evidences(); track item.id) {
+          <article
+            class="evidence-card"
+            role="button"
+            tabindex="0"
+            (click)="selectEvidence(item)"
+            (keydown.enter)="selectEvidence(item)"
+            (keydown.space)="selectEvidence(item); $event.preventDefault()"
+          >
+            <div class="card-preview">
+              @if (item.evidenceType === 'SIGNATURE') {
+                <div class="signature-tag">FIRMA OLÓGRAFA</div>
+              }
+              <img
+                [src]="getFileUrl(item)"
+                [alt]="item.fileName || 'Evidencia pericial'"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="card-body">
+              <span class="type-badge">{{ item.evidenceType }}</span>
+              <h3 class="file-name">{{ item.fileName || 'Sin nombre' }}</h3>
+              <p class="file-info">
+                {{ (item.fileSize / 1024).toFixed(1) }} KB ·
+                {{ item.capturedAt | date: 'short' }}
+              </p>
+
+              <div class="hash-box">
+                <span class="hash-label">SHA-256:</span>
+                <code class="hash-code">{{ item.sha256Hash }}</code>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Modal / Visor de inspección pericial -->
+  @if (selectedEvidence(); as sel) {
+    <div
+      class="lightbox-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Inspección Pericial"
+      (keydown.escape)="closeSelected()"
+    >
+      <button
+        type="button"
+        class="lightbox-backdrop"
+        (click)="closeSelected()"
+        aria-label="Cerrar modal"
+      ></button>
+      <div class="lightbox-modal">
+        <header class="lightbox-header">
+          <h3>Inspección Pericial: {{ sel.fileName }}</h3>
+          <button class="close-btn" (click)="closeSelected()">✕</button>
+        </header>
+
+        <div class="lightbox-content">
+          <div class="image-wrapper">
+            <img [src]="getFileUrl(sel)" [alt]="sel.fileName" />
+          </div>
+
+          <div class="evidence-metadata-panel">
+            <h4>Ficha de Cadena de Custodia</h4>
+            <ul>
+              <li><strong>ID:</strong> <code>{{ sel.id }}</code></li>
+              <li><strong>Tipo:</strong> {{ sel.evidenceType }}</li>
+              <li><strong>MIME Type:</strong> {{ sel.contentType }}</li>
+              <li><strong>Tamaño:</strong> {{ sel.fileSize }} bytes</li>
+              <li><strong>Fecha Captura:</strong> {{ sel.capturedAt }}</li>
+              <li><strong>Ingesta Servidor:</strong> {{ sel.createdAt }}</li>
+              <li>
+                <strong>Digest SHA-256:</strong>
+                <code class="full-hash">{{ sel.sha256Hash }}</code>
+              </li>
+              @if (sel.metadata) {
+                <li>
+                  <strong>Metadatos:</strong>
+                  <pre>{{ sel.metadata }}</pre>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
