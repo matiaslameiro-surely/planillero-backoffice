@@ -73,6 +73,21 @@
     opacity: 0.5;
   }
 
+  &__link {
+    margin-top: $spacing-lg;
+    padding: 0.75rem 1.75rem;
+    border-radius: $radius-sm;
+    background-color: $color-primary;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      filter: brightness(1.05);
+    }
+  }
+
   &__actions {
     display: flex;
     gap: $spacing-sm;
