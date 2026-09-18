@@ -1,0 +1,25 @@
+.denied {
+  max-width: 480px;
+  margin: 4rem auto;
+  padding: 2rem;
+  text-align: center;
+
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+  }
+
+  &__text {
+    margin: 0 0 1.5rem;
+    color: #4b5563;
+  }
+
+  &__back {
+    color: #2563eb;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

@@ -1,0 +1,199 @@
+@use '../../styles/variables' as *;
+
+.planificacion {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: $spacing-lg;
+  font-family: $font-base;
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  &__back {
+    color: $color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__feedback {
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-sm;
+
+    &--error {
+      border: 1px solid $color-error;
+      color: $color-error;
+    }
+
+    &--ok {
+      border: 1px solid $color-success;
+      color: $color-success;
+    }
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: $spacing-md;
+    margin: $spacing-md 0 $spacing-lg;
+    padding: $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+
+    & > span {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+    }
+
+    & input,
+    & select {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      font-size: 0.9rem;
+    }
+  }
+
+  &__primary {
+    margin-left: auto;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: $radius-sm;
+    background-color: $color-primary;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: $spacing-lg;
+    align-items: start;
+
+    @media (max-width: 60rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__section {
+    margin: 0 0 $spacing-md;
+    font-size: 1.05rem;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+
+    th,
+    td {
+      padding: 0.5rem;
+      border-bottom: 1px solid $color-border;
+      text-align: left;
+    }
+
+    th {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+    }
+  }
+
+  &__row {
+    &--blocked {
+      opacity: 0.55;
+    }
+  }
+
+  &__link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: $color-primary;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  &__side {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    padding: $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+  }
+
+  &__route {
+    margin: 0;
+    padding-left: $spacing-lg;
+
+    &-item {
+      display: flex;
+      align-items: baseline;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+      font-size: 0.85rem;
+    }
+
+    &-pos {
+      font-weight: 700;
+      opacity: 0.5;
+    }
+
+    &-code {
+      font-weight: 600;
+    }
+
+    &-urgency {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      padding: 0.1rem 0.35rem;
+      border-radius: $radius-sm;
+      border: 1px solid $color-border;
+    }
+
+    &-address {
+      color: #4b5563;
+    }
+  }
+}

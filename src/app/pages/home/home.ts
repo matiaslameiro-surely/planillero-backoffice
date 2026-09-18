@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import type { HealthResult } from '../../core/models/health.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -17,6 +17,7 @@ type HealthState = { kind: 'checking' } | { kind: 'settled'; result: HealthResul
  */
 @Component({
   selector: 'app-home',
+  imports: [RouterLink],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

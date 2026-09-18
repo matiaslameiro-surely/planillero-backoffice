@@ -1,0 +1,144 @@
+<main class="planificacion">
+  <header class="planificacion__header">
+    <h1 class="planificacion__title">Planificación de rutas</h1>
+    <a class="planificacion__back" routerLink="/">Volver al inicio</a>
+  </header>
+
+  @if (error(); as error) {
+    <p class="planificacion__feedback planificacion__feedback--error" role="alert">{{ error }}</p>
+  }
+  @if (notice(); as notice) {
+    <p class="planificacion__feedback planificacion__feedback--ok" role="status">{{ notice }}</p>
+  }
+
+  <section class="planificacion__controls">
+    <label class="planificacion__field">
+      <span>Fecha</span>
+      <input
+        type="date"
+        [value]="selectedDate()"
+        (change)="onDateChange($event)"
+        aria-label="Fecha de la planificación" />
+    </label>
+
+    <label class="planificacion__field">
+      <span>Operador</span>
+      <select (change)="onOperatorChange($event)" [value]="selectedOperatorId()" aria-label="Operador">
+        <option value="">Todos</option>
+        @for (operator of operators(); track operator.id) {
+          <option [value]="operator.id">{{ operator.username }} ({{ operator.jurisdiction }})</option>
+        }
+      </select>
+    </label>
+
+    <label class="planificacion__field">
+      <span>Estado</span>
+      <select (change)="onStatusChange($event)" [value]="statusFilter()" aria-label="Estado">
+        @for (option of estados; track option.label) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="planificacion__field">
+      <span>Urgencia</span>
+      <select (change)="onUrgencyChange($event)" [value]="urgencyFilter()" aria-label="Urgencia">
+        @for (option of urgencias; track option.label) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+
+    <button
+      type="button"
+      class="planificacion__primary"
+      (click)="assignSelected()"
+      [disabled]="assigning() || selectedCount() === 0 || !selectedOperatorId()">
+      {{ assigning() ? 'Asignando…' : 'Asignar seleccionadas (' + selectedCount() + ')' }}
+    </button>
+  </section>
+
+  <section class="planificacion__layout">
+    <div class="planificacion__grid">
+      <h2 class="planificacion__section">Visitas</h2>
+
+      @if (loading()) {
+        <p class="planificacion__hint">Consultando visitas…</p>
+      } @else if (visits().length === 0) {
+        <p class="planificacion__hint">No hay visitas con los filtros actuales.</p>
+      } @else {
+        <table class="planificacion__table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Codigo</th>
+              <th>Direccion</th>
+              <th>Urgencia</th>
+              <th>Estado</th>
+              <th>Accion</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (visit of visits(); track visit.id) {
+              <tr [class.planificacion__row--blocked]="!isSelectable(visit)">
+                <td>
+                  @if (isSelectable(visit)) {
+                    <input
+                      type="checkbox"
+                      [checked]="selected().has(visit.id)"
+                      (change)="toggle(visit.id, $any($event.target).checked)"
+                      [attr.aria-label]="'Seleccionar ' + visit.code" />
+                  }
+                </td>
+                <td>{{ visit.code }}</td>
+                <td>{{ visit.address }}</td>
+                <td>{{ visit.urgency }}</td>
+                <td>{{ visit.status }}</td>
+                <td>
+                  @if (isSelectable(visit)) {
+                    <button
+                      type="button"
+                      class="planificacion__link"
+                      (click)="assignSingle(visit)"
+                      [disabled]="assigning() || !selectedOperatorId()">
+                      Asignar
+                    </button>
+                  } @else {
+                    <span class="planificacion__hint">No asignable</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <aside class="planificacion__side">
+      <h2 class="planificacion__section">
+        Hoja de ruta — {{ routeSheet()?.operatorUsername ?? 'sin operador' }}
+      </h2>
+
+      @if (routeSheet(); as sheet) {
+        @if (sheet.items.length === 0) {
+          <p class="planificacion__hint">Sin asignaciones para {{ sheet.date }}.</p>
+        } @else {
+          <ol class="planificacion__route">
+            @for (item of sheet.items; track item.position) {
+              <li class="planificacion__route-item">
+                <span class="planificacion__route-pos">{{ item.position }}</span>
+                <span class="planificacion__route-code">{{ item.visit.code }}</span>
+                <span class="planificacion__route-urgency">{{ item.visit.urgency }}</span>
+                <span class="planificacion__route-address">{{ item.visit.address }}</span>
+              </li>
+            }
+          </ol>
+        }
+      } @else {
+        <p class="planificacion__hint">Elegí un operador para ver su hoja de ruta.</p>
+      }
+
+      <app-route-map [visits]="routeVisits()" />
+    </aside>
+  </section>
+</main>
