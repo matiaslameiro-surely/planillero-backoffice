@@ -35,6 +35,10 @@
     <a class="home__link" routerLink="/planificacion">Planificación de rutas</a>
   }
 
+  @if (u?.roles?.includes('ADMINISTRATOR')) {
+    <a class="home__link" routerLink="/auditoria">Auditoría</a>
+  }
+
   <div class="home__actions">
     <button
       type="button"
