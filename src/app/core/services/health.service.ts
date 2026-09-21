@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of, timeout } from 'rxjs';
 
 import { environment } from '../../environments/environment';
+import { apiOriginLabel } from '../api-origin';
 import type { HealthResponse, HealthResult } from '../models/health.model';
 
 /** Milisegundos antes de dar por perdida la consulta. */
@@ -45,6 +46,6 @@ export class HealthService {
     if (typeof status === 'number' && status > 0) {
       return { status: 'error', reason: `El backend respondió ${status}.` };
     }
-    return { status: 'error', reason: `No se pudo conectar con ${environment.apiUrl}.` };
+    return { status: 'error', reason: `No se pudo conectar con ${apiOriginLabel()}.` };
   }
 }

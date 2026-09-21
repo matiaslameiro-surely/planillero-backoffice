@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import type { HealthResult } from '../../core/models/health.model';
 import { AuthService } from '../../core/services/auth.service';
 import { HealthService } from '../../core/services/health.service';
-import { environment } from '../../environments/environment';
+import { apiOriginLabel } from '../../core/api-origin';
 
 /** Lo que se está mostrando: la consulta en curso o su resultado. */
 type HealthState = { kind: 'checking' } | { kind: 'settled'; result: HealthResult };
@@ -28,7 +28,7 @@ export class Home {
   private readonly router = inject(Router);
 
   protected readonly user = this.auth.user;
-  protected readonly apiUrl = environment.apiUrl;
+  protected readonly apiUrl = apiOriginLabel();
   protected readonly health = signal<HealthState>({ kind: 'checking' });
 
   constructor() {
