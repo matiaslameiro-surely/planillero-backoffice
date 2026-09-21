@@ -79,7 +79,7 @@ describe('Planificacion', () => {
   const hoja: RouteSheet = {
     operatorId: operator.id,
     operatorUsername: operator.username,
-    date: '2026-09-18',
+    date: new Date().toISOString().slice(0, 10),
     items: [{ position: 1, visit: pendiente }],
   };
 

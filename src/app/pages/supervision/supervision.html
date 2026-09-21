@@ -1,0 +1,198 @@
+<div class="supervision-container">
+  <!-- Header con controles de refresco y polling -->
+  <header class="supervision-header">
+    <div class="supervision-header__title">
+      <h1>Tablero Central de Supervisión</h1>
+      <p class="supervision-header__subtitle">
+        Jurisdicción: <strong>{{ summary()?.jurisdiction ?? 'Cargando...' }}</strong> &bull;
+        Fecha operativa: <strong>{{ summary()?.date ?? '' }}</strong>
+      </p>
+    </div>
+
+    <div class="supervision-header__controls">
+      <div class="polling-selector">
+        <label for="polling-select">Frecuencia:</label>
+        <select
+          id="polling-select"
+          [ngModel]="pollingSeconds()"
+          (ngModelChange)="onPollingChange($event)"
+        >
+          <option [ngValue]="30">Cada 30s</option>
+          <option [ngValue]="60">Cada 60s</option>
+          <option [ngValue]="0">Pausa (manual)</option>
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="refresh()"
+        [disabled]="loading()"
+        aria-label="Actualizar ahora"
+      >
+        @if (loading()) {
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Actualizando...</span>
+        } @else {
+          <span>&#x21bb; Actualizar ahora</span>
+        }
+      </button>
+
+      @if (lastUpdated()) {
+        <span class="last-updated">Actualizado: {{ lastUpdated() }}</span>
+      }
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Fila de Tarjetas de KPIs métricos -->
+  <section class="kpi-grid" aria-label="Indicadores clave de desempeño operativo">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Operadores Asignados</div>
+      <div class="kpi-card__value">{{ summary()?.totalOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">{{ summary()?.totalVisits ?? 0 }} visitas totales</div>
+    </div>
+
+    <div class="kpi-card kpi-card--en-campo">
+      <div class="kpi-card__label">En Campo / En Ruta</div>
+      <div class="kpi-card__value">{{ summary()?.inFieldOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">Transmitiendo dentro de SLA</div>
+    </div>
+
+    <div class="kpi-card kpi-card--demorado">
+      <div class="kpi-card__label">Fuera de SLA / Demorados</div>
+      <div class="kpi-card__value">{{ summary()?.delayedOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">Atención inmediata requerida</div>
+    </div>
+
+    <div class="kpi-card kpi-card--offline">
+      <div class="kpi-card__label">Desconectados / Offline</div>
+      <div class="kpi-card__value">{{ summary()?.offlineOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">> 10 min sin latido</div>
+    </div>
+
+    <div class="kpi-card kpi-card--completo">
+      <div class="kpi-card__label">Turnos Completados</div>
+      <div class="kpi-card__value">{{ summary()?.completedShiftOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">{{ summary()?.completedVisits ?? 0 }} visitas cerradas</div>
+    </div>
+
+    <div class="kpi-card kpi-card--sla">
+      <div class="kpi-card__label">Cumplimiento de SLA</div>
+      <div class="kpi-card__value">{{ summary()?.slaComplianceRate ?? 100 }}%</div>
+      <div class="kpi-card__sub">Índice de puntualidad operativa</div>
+    </div>
+  </section>
+
+  <!-- Heurística 8 UX: Panel de Excepciones Destacadas para Foco Inmediato -->
+  @if (criticalExceptions().length > 0) {
+    <section class="exceptions-panel" aria-label="Alertas y excepciones operativas urgentes">
+      <div class="exceptions-panel__header">
+        <h2>&#x26A0; Monitoreo de Excepciones y Desvíos de SLA</h2>
+        <span class="badge badge--count">{{ criticalExceptions().length }} activas</span>
+      </div>
+      <div class="exceptions-list">
+        @for (exc of criticalExceptions(); track exc.operatorId + exc.type) {
+          <div class="exception-item exception-item--{{ exc.severity.toLowerCase() }}">
+            <div class="exception-item__main">
+              <strong>{{ exc.operatorUsername }}</strong>: {{ exc.message }}
+            </div>
+            <div class="exception-item__meta">
+              <span class="badge badge--{{ exc.type.toLowerCase() }}">{{ exc.type }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Layout Principal: Grilla Reactiva de Operadores y Mapa Operativo -->
+  <main class="supervision-main">
+    <!-- Panel Izquierdo: Lista reactiva de operadores -->
+    <section class="operators-section" aria-label="Listado reactivo de operadores">
+      <div class="section-title">
+        <h2>Operadores en Turno ({{ operators().length }})</h2>
+      </div>
+
+      <div class="operators-list">
+        @for (op of operators(); track op.operatorId) {
+          <article
+            class="operator-card"
+            [class.operator-card--selected]="op.operatorId === selectedOperatorId()"
+            [class.operator-card--delayed]="op.status === 'DEMORADO'"
+            [class.operator-card--offline]="op.status === 'OFFLINE'"
+            (click)="selectOperator(op)"
+            tabindex="0"
+            role="button"
+            [attr.aria-pressed]="op.operatorId === selectedOperatorId()"
+          >
+            <div class="operator-card__top">
+              <span class="operator-card__name">{{ op.username }}</span>
+              <span class="badge status-{{ op.status.toLowerCase() }}">
+                @switch (op.status) {
+                  @case ('EN_CAMPO') { En campo }
+                  @case ('DEMORADO') { Demorado }
+                  @case ('OFFLINE') { Offline }
+                  @case ('TURNO_COMPLETO') { Turno completo }
+                }
+              </span>
+            </div>
+
+            <div class="operator-card__progress">
+              <span>Visitas: <strong>{{ op.completedVisitsCount }}/{{ op.assignedVisitsCount }}</strong></span>
+              <span class="telemetry">
+                @if (op.batteryLevel !== null) {
+                  <span [class.text-danger]="op.batteryLevel < 0.20">
+                    Batería: {{ (op.batteryLevel * 100) | number:'1.0-0' }}%
+                  </span>
+                }
+                &bull; Red: {{ op.networkStatus }}
+              </span>
+            </div>
+
+            @if (op.activeVisitCode) {
+              <div class="operator-card__visit">
+                <span class="visit-code">&#x1F4CD; {{ op.activeVisitCode }}</span>
+                <span class="visit-time" [class.text-danger]="op.slaStatus === 'DELAYED'">
+                  ({{ op.activeVisitElapsedMinutes ?? 0 }}m en curso)
+                </span>
+                <div class="visit-address">{{ op.activeVisitAddress }}</div>
+              </div>
+            } @else {
+              <div class="operator-card__no-visit">Sin visita en curso</div>
+            }
+
+            @if (op.observations) {
+              <div class="operator-card__obs">
+                &ldquo;{{ op.observations }}&rdquo;
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="operators-list__empty">
+            No se registran operadores en turno para la fecha consultada.
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Panel Derecho: Mapa Operativo con Leaflet -->
+    <section class="map-section" aria-label="Mapa operativo en vivo">
+      <div class="section-title">
+        <h2>Mapa de Cobertura y Despliegue en Terreno</h2>
+      </div>
+      <div class="map-wrapper">
+        <app-supervision-map
+          [operators]="operators()"
+          [selectedOperatorId]="selectedOperatorId()"
+          (operatorSelected)="selectOperator($event)"
+        />
+      </div>
+    </section>
+  </main>
+</div>
