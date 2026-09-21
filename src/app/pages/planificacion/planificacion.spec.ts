@@ -115,7 +115,9 @@ describe('Planificacion', () => {
 
     expect(vi.mocked(service.getOperators)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(service.getVisits)).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(service.getRouteSheet)).toHaveBeenCalledWith(operator.id, hoja.date);
+    // La fecha por defecto es la de hoy (`todayIso()` del componente), no la de la fixture: se lee
+    // del input real en vez de hardcodear un valor que queda viejo apenas cambia el día.
+    expect(vi.mocked(service.getRouteSheet)).toHaveBeenCalledWith(operator.id, dateInput().value);
 
     const rows = fixture.nativeElement.querySelectorAll('.planificacion__table tbody tr');
     expect(rows.length).toBe(1);

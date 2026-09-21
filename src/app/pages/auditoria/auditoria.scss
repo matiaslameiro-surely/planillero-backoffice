@@ -1,0 +1,206 @@
+@use '../../styles/variables' as *;
+
+.auditoria {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: $spacing-lg;
+  font-family: $font-base;
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  &__back {
+    color: $color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__feedback {
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-sm;
+
+    &--error {
+      border: 1px solid $color-error;
+      color: $color-error;
+    }
+  }
+
+  &__section {
+    margin: 0 0 $spacing-md;
+    font-size: 1.05rem;
+  }
+
+  &__verify {
+    margin: $spacing-md 0 $spacing-lg;
+    padding: $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+
+    &-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: $spacing-md;
+    }
+
+    &-result {
+      margin: $spacing-md 0 0;
+      padding: $spacing-sm $spacing-md;
+      border-radius: $radius-sm;
+      font-weight: 600;
+
+      &--ok {
+        border: 1px solid $color-success;
+        color: $color-success;
+      }
+
+      &--broken {
+        border: 1px solid $color-error;
+        color: $color-error;
+      }
+    }
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+
+    & > span {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+    }
+
+    & input,
+    & select {
+      padding: 0.4rem 0.5rem;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      font-size: 0.9rem;
+    }
+  }
+
+  &__primary {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: $radius-sm;
+    background-color: $color-primary;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+
+    th,
+    td {
+      padding: 0.5rem;
+      border-bottom: 1px solid $color-border;
+      text-align: left;
+    }
+
+    th {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.6;
+    }
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: help;
+
+    &--primary {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+
+    &--success {
+      border-color: $color-success;
+      color: $color-success;
+    }
+
+    &--warning {
+      border-color: $color-warning;
+      color: $color-warning;
+    }
+
+    &--info {
+      border-color: $color-info;
+      color: $color-info;
+    }
+  }
+
+  &__code {
+    margin-left: $spacing-sm;
+    font-size: 0.72rem;
+    opacity: 0.6;
+  }
+
+  &__pager {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-md;
+    margin-top: $spacing-md;
+    font-size: 0.85rem;
+
+    button {
+      padding: 0.4rem 0.9rem;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      background: transparent;
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+    }
+  }
+}
