@@ -45,12 +45,15 @@
   <section class="auditoria__controls">
     <label class="auditoria__field">
       <span>Tipo de evento</span>
-      <input
-        type="text"
+      <select
         [value]="eventTypeFilter()"
         (change)="onEventTypeChange($event)"
-        placeholder="VISIT_STARTED"
-        aria-label="Tipo de evento" />
+        aria-label="Tipo de evento">
+        <option value="">Todos los eventos</option>
+        @for (type of eventTypes; track type.code) {
+          <option [value]="type.code" [title]="type.description">{{ type.label }} ({{ type.code }})</option>
+        }
+      </select>
     </label>
 
     <label class="auditoria__field">
@@ -61,6 +64,26 @@
         (change)="onUsernameChange($event)"
         placeholder="operador.demo"
         aria-label="Usuario" />
+    </label>
+
+    <label class="auditoria__field">
+      <span>Desde</span>
+      <input
+        type="date"
+        [value]="fromFilter()"
+        [max]="toFilter() || null"
+        (change)="onFromChange($event)"
+        aria-label="Fecha desde" />
+    </label>
+
+    <label class="auditoria__field">
+      <span>Hasta</span>
+      <input
+        type="date"
+        [value]="toFilter()"
+        [min]="fromFilter() || null"
+        (change)="onToChange($event)"
+        aria-label="Fecha hasta" />
     </label>
   </section>
 
@@ -74,8 +97,8 @@
         <thead>
           <tr>
             <th>Fecha</th>
-            <th>Evento</th>
-            <th>Entidad</th>
+            <th title="Qué ocurrió; pasá el cursor sobre cada badge para ver su significado.">Evento</th>
+            <th title="Tipo de entidad e identificador sobre el que se registró el evento.">Entidad</th>
             <th>Usuario</th>
             <th>IP</th>
           </tr>
@@ -84,14 +107,33 @@
           @for (log of logs(); track log.id) {
             <tr>
               <td>{{ log.createdAt }}</td>
-              <td>{{ log.eventType }}</td>
-              <td>{{ log.entityType }} / {{ log.entityId }}</td>
+              <td>
+                <span
+                  class="auditoria__badge auditoria__badge--{{ eventTone(log.eventType) }}"
+                  [title]="eventDescription(log.eventType)"
+                  tabindex="0">
+                  {{ eventLabel(log.eventType) }}
+                </span>
+                <code class="auditoria__code">{{ log.eventType }}</code>
+              </td>
+              <td>
+                <span [title]="entityDescription(log.entityType)">{{ log.entityType }}</span>
+                / {{ log.entityId }}
+              </td>
               <td>{{ log.username }}</td>
               <td>{{ log.ip }}</td>
             </tr>
           }
         </tbody>
       </table>
+
+      <nav class="auditoria__pager" aria-label="Paginación de eventos">
+        <button type="button" (click)="previousPage()" [disabled]="!hasPrevious()">Anterior</button>
+        <span class="auditoria__pager-status">
+          Página {{ page() + 1 }} de {{ totalPages() }} · {{ totalElements() }} eventos
+        </span>
+        <button type="button" (click)="nextPage()" [disabled]="!hasNext()">Siguiente</button>
+      </nav>
     }
   </section>
 </main>

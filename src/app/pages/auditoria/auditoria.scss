@@ -93,7 +93,8 @@
       opacity: 0.6;
     }
 
-    & input {
+    & input,
+    & select {
       padding: 0.4rem 0.5rem;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
@@ -140,6 +141,66 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       opacity: 0.6;
+    }
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: help;
+
+    &--primary {
+      border-color: $color-primary;
+      color: $color-primary;
+    }
+
+    &--success {
+      border-color: $color-success;
+      color: $color-success;
+    }
+
+    &--warning {
+      border-color: $color-warning;
+      color: $color-warning;
+    }
+
+    &--info {
+      border-color: $color-info;
+      color: $color-info;
+    }
+  }
+
+  &__code {
+    margin-left: $spacing-sm;
+    font-size: 0.72rem;
+    opacity: 0.6;
+  }
+
+  &__pager {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-md;
+    margin-top: $spacing-md;
+    font-size: 0.85rem;
+
+    button {
+      padding: 0.4rem 0.9rem;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      background: transparent;
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
     }
   }
 }

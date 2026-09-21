@@ -1,7 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import {
+  AUDIT_ENTITY_TYPE_DESCRIPTIONS,
+  AUDIT_EVENT_TYPES,
+  eventTypeInfo,
+} from '../../core/models/audit-event-types';
 import type { AuditLogEntry, ChainVerificationResult } from '../../core/models/audit.model';
 import { AuditService } from '../../core/services/audit.service';
 
@@ -17,10 +22,24 @@ function messageOf(error: unknown): string {
   return 'No se pudo completar la operación.';
 }
 
+const PAGE_SIZE = 20;
+
+/** Inicio del día local elegido (`yyyy-MM-dd`), como instante ISO para el parámetro `from`. */
+function startOfDay(date: string): string | undefined {
+  const [year, month, day] = date.split('-').map(Number);
+  return date ? new Date(year, month - 1, day).toISOString() : undefined;
+}
+
+/** Fin del día local elegido, como instante ISO para el parámetro `to`. */
+function endOfDay(date: string): string | undefined {
+  const [year, month, day] = date.split('-').map(Number);
+  return date ? new Date(year, month - 1, day, 23, 59, 59, 999).toISOString() : undefined;
+}
+
 /**
  * Pantalla de auditoría, sólo para administradores.
  *
- * Lista los eventos con filtros y ofrece verificar la integridad de la cadena de hashes, completa
+ * Lista los eventos con filtros (tipo de evento, usuario y rango de fechas), paginados, y ofrece verificar la integridad de la cadena de hashes, completa
  * o de una visita puntual (botón "Auditar Integridad de Visita").
  */
 @Component({
@@ -39,6 +58,16 @@ export class Auditoria {
 
   protected readonly eventTypeFilter = signal('');
   protected readonly usernameFilter = signal('');
+  protected readonly fromFilter = signal('');
+  protected readonly toFilter = signal('');
+
+  protected readonly page = signal(0);
+  protected readonly totalPages = signal(0);
+  protected readonly totalElements = signal(0);
+  protected readonly hasPrevious = computed(() => this.page() > 0);
+  protected readonly hasNext = computed(() => this.page() + 1 < this.totalPages());
+
+  protected readonly eventTypes = AUDIT_EVENT_TYPES;
 
   protected readonly verifyVisitId = signal('');
   protected readonly verifying = signal(false);
@@ -49,13 +78,54 @@ export class Auditoria {
   }
 
   protected onEventTypeChange(event: Event): void {
-    this.eventTypeFilter.set((event.target as HTMLInputElement).value);
-    this.reload();
+    this.eventTypeFilter.set((event.target as HTMLSelectElement).value);
+    this.applyFilters();
   }
 
   protected onUsernameChange(event: Event): void {
     this.usernameFilter.set((event.target as HTMLInputElement).value);
-    this.reload();
+    this.applyFilters();
+  }
+
+  protected onFromChange(event: Event): void {
+    this.fromFilter.set((event.target as HTMLInputElement).value);
+    this.applyFilters();
+  }
+
+  protected onToChange(event: Event): void {
+    this.toFilter.set((event.target as HTMLInputElement).value);
+    this.applyFilters();
+  }
+
+  protected previousPage(): void {
+    if (this.hasPrevious()) {
+      this.page.update((page) => page - 1);
+      this.reload();
+    }
+  }
+
+  protected nextPage(): void {
+    if (this.hasNext()) {
+      this.page.update((page) => page + 1);
+      this.reload();
+    }
+  }
+
+  /** Nombre legible del evento, o el código crudo si el backend agrega uno que acá no se conoce. */
+  protected eventLabel(code: string): string {
+    return eventTypeInfo(code)?.label ?? code;
+  }
+
+  protected eventDescription(code: string): string {
+    return eventTypeInfo(code)?.description ?? 'Tipo de evento sin descripción registrada.';
+  }
+
+  protected eventTone(code: string): string {
+    return eventTypeInfo(code)?.tone ?? 'neutral';
+  }
+
+  protected entityDescription(code: string): string {
+    return AUDIT_ENTITY_TYPE_DESCRIPTIONS[code] ?? 'Tipo de entidad sin descripción registrada.';
   }
 
   protected onVerifyVisitIdChange(event: Event): void {
@@ -80,6 +150,12 @@ export class Auditoria {
     });
   }
 
+  /** Un cambio de filtro vuelve a la primera página: la actual puede no existir con el nuevo filtro. */
+  private applyFilters(): void {
+    this.page.set(0);
+    this.reload();
+  }
+
   private reload(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -87,11 +163,17 @@ export class Auditoria {
       .getLogs({
         eventType: this.eventTypeFilter().trim() || undefined,
         username: this.usernameFilter().trim() || undefined,
+        from: startOfDay(this.fromFilter()),
+        to: endOfDay(this.toFilter()),
+        page: this.page(),
+        size: PAGE_SIZE,
       })
       .subscribe({
         next: (page) => {
           this.loading.set(false);
           this.logs.set(page.content);
+          this.totalPages.set(page.totalPages);
+          this.totalElements.set(page.totalElements);
         },
         error: (error: unknown) => {
           this.loading.set(false);

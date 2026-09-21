@@ -58,19 +58,101 @@ describe('Auditoria', () => {
     expect(rows[0].textContent).toContain('operador.demo');
   });
 
-  it('refiltra al cambiar el tipo de evento', () => {
+  it('refiltra al elegir un tipo de evento del selector', () => {
     create();
 
-    const input: HTMLInputElement = fixture.nativeElement.querySelector(
-      'input[aria-label="Tipo de evento"]',
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector(
+      'select[aria-label="Tipo de evento"]',
     );
-    input.value = 'EVIDENCE_SAVED';
-    input.dispatchEvent(new Event('change'));
+    const codes = Array.from(select.options).map((option) => option.value);
+    expect(codes).toEqual([
+      '',
+      'VISIT_ASSIGNED',
+      'VISIT_STARTED',
+      'FORM_SUBMITTED',
+      'EVIDENCE_SAVED',
+      'MANIFEST_SIGNED',
+    ]);
+
+    select.value = 'EVIDENCE_SAVED';
+    select.dispatchEvent(new Event('change'));
 
     expect(vi.mocked(service.getLogs)).toHaveBeenLastCalledWith({
       eventType: 'EVIDENCE_SAVED',
       username: undefined,
+      from: undefined,
+      to: undefined,
+      page: 0,
+      size: 20,
     });
+  });
+
+  it('filtra por rango de fechas: desde el inicio del día hasta el fin del día', () => {
+    create();
+
+    const from: HTMLInputElement = fixture.nativeElement.querySelector('input[aria-label="Fecha desde"]');
+    from.value = '2026-11-01';
+    from.dispatchEvent(new Event('change'));
+    const to: HTMLInputElement = fixture.nativeElement.querySelector('input[aria-label="Fecha hasta"]');
+    to.value = '2026-11-10';
+    to.dispatchEvent(new Event('change'));
+
+    const filters = vi.mocked(service.getLogs).mock.lastCall?.[0];
+    expect(filters?.from).toBe(new Date(2026, 10, 1).toISOString());
+    expect(filters?.to).toBe(new Date(2026, 10, 10, 23, 59, 59, 999).toISOString());
+  });
+
+  it('pagina hacia adelante y hacia atrás, y vuelve a la primera página al cambiar un filtro', () => {
+    vi.mocked(service.getLogs).mockReturnValue(
+      of({ ...page, totalElements: 45, totalPages: 3 }),
+    );
+    create();
+
+    const buttons = (): HTMLButtonElement[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.auditoria__pager button'));
+    expect(fixture.nativeElement.querySelector('.auditoria__pager-status').textContent).toContain(
+      'Página 1 de 3',
+    );
+    expect(buttons()[0].disabled).toBe(true);
+
+    buttons()[1].click();
+    fixture.detectChanges();
+    expect(vi.mocked(service.getLogs).mock.lastCall?.[0]?.page).toBe(1);
+
+    buttons()[1].click();
+    fixture.detectChanges();
+    expect(vi.mocked(service.getLogs).mock.lastCall?.[0]?.page).toBe(2);
+    expect(buttons()[1].disabled).toBe(true);
+
+    buttons()[0].click();
+    fixture.detectChanges();
+    expect(vi.mocked(service.getLogs).mock.lastCall?.[0]?.page).toBe(1);
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[aria-label="Usuario"]');
+    input.value = 'operador.demo';
+    input.dispatchEvent(new Event('change'));
+    expect(vi.mocked(service.getLogs).mock.lastCall?.[0]?.page).toBe(0);
+  });
+
+  it('muestra el evento como badge semántico con tooltip explicativo', () => {
+    create();
+
+    const badge: HTMLElement = fixture.nativeElement.querySelector('.auditoria__badge');
+    expect(badge.textContent).toContain('Visita iniciada');
+    expect(badge.classList).toContain('auditoria__badge--success');
+    expect(badge.title).toContain('inició la visita');
+    expect(fixture.nativeElement.querySelector('td span[title]').title.length).toBeGreaterThan(0);
+  });
+
+  it('muestra un código de evento desconocido sin romper la grilla', () => {
+    vi.mocked(service.getLogs).mockReturnValue(
+      of({ ...page, content: [{ ...entry, eventType: 'NUEVO_EVENTO' }] }),
+    );
+    create();
+
+    const badge: HTMLElement = fixture.nativeElement.querySelector('.auditoria__badge');
+    expect(badge.textContent).toContain('NUEVO_EVENTO');
+    expect(badge.classList).toContain('auditoria__badge--neutral');
   });
 
   it('audita la cadena completa cuando el campo de visita está vacío', () => {
