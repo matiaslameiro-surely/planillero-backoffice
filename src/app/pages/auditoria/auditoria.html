@@ -1,0 +1,139 @@
+<main class="auditoria">
+  <header class="auditoria__header">
+    <h1 class="auditoria__title">Auditoría</h1>
+    <a class="auditoria__back" routerLink="/">Volver al inicio</a>
+  </header>
+
+  @if (error(); as error) {
+    <p class="auditoria__feedback auditoria__feedback--error" role="alert">{{ error }}</p>
+  }
+
+  <section class="auditoria__verify">
+    <h2 class="auditoria__section">Auditar Integridad de Visita</h2>
+    <div class="auditoria__verify-controls">
+      <label class="auditoria__field">
+        <span>ID de visita (vacío = cadena completa)</span>
+        <input
+          type="text"
+          [value]="verifyVisitId()"
+          (input)="onVerifyVisitIdChange($event)"
+          aria-label="ID de visita a auditar" />
+      </label>
+      <button
+        type="button"
+        class="auditoria__primary"
+        (click)="verifyIntegrity()"
+        [disabled]="verifying()">
+        {{ verifying() ? 'Auditando…' : 'Auditar Integridad de Visita' }}
+      </button>
+    </div>
+
+    @if (verificationResult(); as result) {
+      <p
+        class="auditoria__verify-result"
+        [class.auditoria__verify-result--ok]="result.intacta"
+        [class.auditoria__verify-result--broken]="!result.intacta">
+        @if (result.intacta) {
+          ✓ Cadena íntegra: no se detectaron alteraciones.
+        } @else {
+          ⚠ Cadena rota en {{ result.primerEslabonRotoId }}: {{ result.motivo }}
+        }
+      </p>
+    }
+  </section>
+
+  <section class="auditoria__controls">
+    <label class="auditoria__field">
+      <span>Tipo de evento</span>
+      <select
+        [value]="eventTypeFilter()"
+        (change)="onEventTypeChange($event)"
+        aria-label="Tipo de evento">
+        <option value="">Todos los eventos</option>
+        @for (type of eventTypes; track type.code) {
+          <option [value]="type.code" [title]="type.description">{{ type.label }} ({{ type.code }})</option>
+        }
+      </select>
+    </label>
+
+    <label class="auditoria__field">
+      <span>Usuario</span>
+      <input
+        type="text"
+        [value]="usernameFilter()"
+        (change)="onUsernameChange($event)"
+        placeholder="operador.demo"
+        aria-label="Usuario" />
+    </label>
+
+    <label class="auditoria__field">
+      <span>Desde</span>
+      <input
+        type="date"
+        [value]="fromFilter()"
+        [max]="toFilter() || null"
+        (change)="onFromChange($event)"
+        aria-label="Fecha desde" />
+    </label>
+
+    <label class="auditoria__field">
+      <span>Hasta</span>
+      <input
+        type="date"
+        [value]="toFilter()"
+        [min]="fromFilter() || null"
+        (change)="onToChange($event)"
+        aria-label="Fecha hasta" />
+    </label>
+  </section>
+
+  <section class="auditoria__grid">
+    @if (loading()) {
+      <p class="auditoria__hint">Consultando auditoría…</p>
+    } @else if (logs().length === 0) {
+      <p class="auditoria__hint">No hay eventos con los filtros actuales.</p>
+    } @else {
+      <table class="auditoria__table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th title="Qué ocurrió; pasá el cursor sobre cada badge para ver su significado.">Evento</th>
+            <th title="Tipo de entidad e identificador sobre el que se registró el evento.">Entidad</th>
+            <th>Usuario</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td>{{ log.createdAt }}</td>
+              <td>
+                <span
+                  class="auditoria__badge auditoria__badge--{{ eventTone(log.eventType) }}"
+                  [title]="eventDescription(log.eventType)"
+                  tabindex="0">
+                  {{ eventLabel(log.eventType) }}
+                </span>
+                <code class="auditoria__code">{{ log.eventType }}</code>
+              </td>
+              <td>
+                <span [title]="entityDescription(log.entityType)">{{ log.entityType }}</span>
+                / {{ log.entityId }}
+              </td>
+              <td>{{ log.username }}</td>
+              <td>{{ log.ip }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <nav class="auditoria__pager" aria-label="Paginación de eventos">
+        <button type="button" (click)="previousPage()" [disabled]="!hasPrevious()">Anterior</button>
+        <span class="auditoria__pager-status">
+          Página {{ page() + 1 }} de {{ totalPages() }} · {{ totalElements() }} eventos
+        </span>
+        <button type="button" (click)="nextPage()" [disabled]="!hasNext()">Siguiente</button>
+      </nav>
+    }
+  </section>
+</main>

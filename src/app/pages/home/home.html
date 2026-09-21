@@ -36,6 +36,10 @@
     <a class="home__link" routerLink="/supervision">Tablero de supervisión</a>
   }
 
+  @if (u?.roles?.includes('ADMINISTRATOR')) {
+    <a class="home__link" routerLink="/auditoria">Auditoría</a>
+  }
+
   <div class="home__actions">
     <button
       type="button"
