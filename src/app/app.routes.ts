@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { administratorGuard } from './core/guards/administrator.guard';
 import { anonymousGuard } from './core/guards/anonymous.guard';
 import { authenticatedGuard } from './core/guards/authenticated.guard';
 import { supervisorGuard } from './core/guards/supervisor.guard';
@@ -26,6 +27,11 @@ export const routes: Routes = [
     path: 'planificacion',
     canActivate: [supervisorGuard],
     loadComponent: () => import('./pages/planificacion/planificacion').then((m) => m.Planificacion),
+  },
+  {
+    path: 'auditoria',
+    canActivate: [administratorGuard],
+    loadComponent: () => import('./pages/auditoria/auditoria').then((m) => m.Auditoria),
   },
   {
     path: 'acceso-denegado',

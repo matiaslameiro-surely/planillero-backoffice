@@ -126,8 +126,8 @@ describe('Planificacion', () => {
 
     expect(vi.mocked(service.getOperators)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(service.getVisits)).toHaveBeenCalledTimes(1);
-    // La fecha es la que muestra la cabecera —hoy—, no la del stub: comparar contra una fecha fija
-    // hacía que el test pasara sólo el día en que se escribió.
+    // La fecha por defecto es la de hoy (`todayIso()` del componente), no la de la fixture: se lee
+    // del input real en vez de hardcodear un valor que queda viejo apenas cambia el día.
     expect(vi.mocked(service.getRouteSheet)).toHaveBeenCalledWith(operator.id, dateInput().value);
 
     const rows = fixture.nativeElement.querySelectorAll('.planificacion__table tbody tr');
