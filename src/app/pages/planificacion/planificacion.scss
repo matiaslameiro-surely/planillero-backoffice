@@ -168,6 +168,16 @@
     }
   }
 
+  &__exp-link {
+    color: $color-primary;
+    font-size: 0.85rem;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   &__side {
     display: flex;
     flex-direction: column;
@@ -208,6 +218,22 @@
 
     &-address {
       color: #4b5563;
+    }
+
+    &-link {
+      margin-left: auto;
+      padding: 0.2rem 0.5rem;
+      border: 1px solid $color-primary;
+      border-radius: $radius-sm;
+      color: $color-primary;
+      font-size: 0.7rem;
+      text-decoration: none;
+      white-space: nowrap;
+
+      &:hover {
+        background: $color-primary;
+        color: #fff;
+      }
     }
   }
 }

@@ -76,6 +76,7 @@
               <th>Urgencia</th>
               <th>Estado</th>
               <th>Sincronizacion</th>
+              <th>Expediente</th>
               <th>Accion</th>
             </tr>
           </thead>
@@ -102,6 +103,11 @@
                   @if (visit.syncedDeferred) {
                     <span class="planificacion__deferred" [title]="deferredTitle(visit)">Diferida</span>
                   }
+                </td>
+                <td>
+                  <a class="planificacion__exp-link" [routerLink]="['/expediente', visit.id]">
+                    Ver expediente
+                  </a>
                 </td>
                 <td>
                   @if (isSelectable(visit)) {
@@ -139,6 +145,9 @@
                 <span class="planificacion__route-code">{{ item.visit.code }}</span>
                 <span class="planificacion__route-urgency">{{ item.visit.urgency }}</span>
                 <span class="planificacion__route-address">{{ item.visit.address }}</span>
+                <a class="planificacion__route-link" [routerLink]="['/expediente', item.visit.id]">
+                  Ver expediente
+                </a>
               </li>
             }
           </ol>
