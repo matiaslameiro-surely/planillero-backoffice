@@ -50,5 +50,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/evidence-viewer/evidence-viewer').then((m) => m.EvidenceViewer),
   },
+  {
+    path: 'expediente/:visitId',
+    canActivate: [supervisorGuard],
+    loadComponent: () =>
+      import('./pages/expediente/expediente.component').then((m) => m.ExpedienteComponent),
+  },
   { path: '**', redirectTo: '' },
 ];
