@@ -75,6 +75,7 @@
               <th>Direccion</th>
               <th>Urgencia</th>
               <th>Estado</th>
+              <th>Sincronizacion</th>
               <th>Accion</th>
             </tr>
           </thead>
@@ -94,6 +95,14 @@
                 <td>{{ visit.address }}</td>
                 <td>{{ visit.urgency }}</td>
                 <td>{{ visit.status }}</td>
+                <td>
+                  <!-- Sólo se marca lo que llegó en diferido. Poner también "En línea" en el resto
+                       llenaría la grilla de una palabra que no aporta nada: lo excepcional es lo
+                       que hay que poder ver de un vistazo. -->
+                  @if (visit.syncedDeferred) {
+                    <span class="planificacion__deferred" [title]="deferredTitle(visit)">Diferida</span>
+                  }
+                </td>
                 <td>
                   @if (isSelectable(visit)) {
                     <button

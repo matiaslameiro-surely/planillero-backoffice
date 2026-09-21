@@ -20,6 +20,15 @@ export interface Visit {
   longitude: number;
   status: VisitStatus;
   urgency: VisitUrgency;
+  /**
+   * El formulario de la visita llegó por sincronización diferida y no por la carga en línea.
+   *
+   * Es un dato de auditoría, no un problema: dice que el operador trabajó sin señal y que el acta
+   * viajó después. Quien revisa el expediente necesita poder distinguirlo.
+   */
+  syncedDeferred: boolean;
+  /** Cuándo se recibió esa sincronización, ISO-8601, o `null` si no la hubo. */
+  syncedAt: string | null;
 }
 
 /** Hito de la hoja de ruta: una visita con su posición en el recorrido. */

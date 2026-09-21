@@ -123,6 +123,21 @@ export class Planificacion {
     return visit.status !== 'COMPLETED' && visit.status !== 'CANCELLED';
   }
 
+  /**
+   * Detalle de la sincronización diferida, para el título accesible de la marca.
+   *
+   * La grilla muestra sólo «Diferida» para no competir con el resto de las columnas; el cuándo, que
+   * es el dato que hace falta al revisar un expediente, queda a un hover o a un lector de pantalla.
+   */
+  protected deferredTitle(visit: Visit): string {
+    if (!visit.syncedAt) {
+      return 'El acta se cargó sin conexión y se sincronizó después.';
+    }
+    return `El acta se cargó sin conexión y se sincronizó el ${new Date(
+      visit.syncedAt,
+    ).toLocaleString('es-AR')}.`;
+  }
+
   /** Marca o desmarca una visita para la asignación en bloque. */
   protected toggle(visitId: string, checked: boolean): void {
     const next = new Set(this.selected());
