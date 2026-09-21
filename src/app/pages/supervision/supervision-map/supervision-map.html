@@ -1,0 +1,8 @@
+<div class="supervision-map">
+  <div class="supervision-map__canvas" aria-label="Mapa operativo de operadores y visitas"></div>
+  @if (markerCount() === 0) {
+    <div class="supervision-map__empty">
+      No hay operadores con coordenadas disponibles para mostrar en el mapa.
+    </div>
+  }
+</div>

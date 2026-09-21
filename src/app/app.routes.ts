@@ -28,6 +28,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/planificacion/planificacion').then((m) => m.Planificacion),
   },
   {
+    path: 'supervision',
+    canActivate: [supervisorGuard],
+    loadComponent: () => import('./pages/supervision/supervision').then((m) => m.Supervision),
+  },
+  {
     path: 'acceso-denegado',
     canActivate: [authenticatedGuard],
     loadComponent: () =>
