@@ -26,6 +26,8 @@ describe('PlanificacionService', () => {
     longitude: -58.452123,
     status: 'PENDING',
     urgency: 'HIGH',
+    syncedDeferred: false,
+    syncedAt: null,
   };
 
   beforeEach(() => {

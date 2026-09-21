@@ -55,6 +55,17 @@ describe('Planificacion', () => {
     longitude: -58.452123,
     status: 'PENDING',
     urgency: 'HIGH',
+    syncedDeferred: false,
+    syncedAt: null,
+  };
+
+  /** Acta cargada sin conexión y sincronizada después. */
+  const diferida: Visit = {
+    ...pendiente,
+    id: 'a0000001-0000-4000-8000-000000000003',
+    code: 'V-1003',
+    syncedDeferred: true,
+    syncedAt: '2026-09-21T11:58:03.412Z',
   };
 
   const completada: Visit = {
@@ -192,6 +203,39 @@ describe('Planificacion', () => {
     expect(rows.length).toBe(2);
     expect(fixture.nativeElement.querySelectorAll('input[type="checkbox"]').length).toBe(1);
     expect(rows[1].textContent).toContain('No asignable');
+  });
+
+  it('marca las actas sincronizadas en diferido y no toca a las demas', () => {
+    vi.mocked(service.getVisits).mockReturnValue(of([pendiente, diferida]));
+    create();
+
+    const marcas = fixture.nativeElement.querySelectorAll('.planificacion__deferred');
+    expect(marcas.length).toBe(1);
+    expect(marcas[0].textContent.trim()).toBe('Diferida');
+
+    // La fila que llegó en línea no muestra nada: lo excepcional es lo que tiene que saltar a la vista.
+    const filas = fixture.nativeElement.querySelectorAll('.planificacion__table tbody tr');
+    expect(filas[0].querySelector('.planificacion__deferred')).toBeNull();
+    expect(filas[1].querySelector('.planificacion__deferred')).not.toBeNull();
+  });
+
+  it('el cuando de la sincronizacion queda en el titulo accesible de la marca', () => {
+    vi.mocked(service.getVisits).mockReturnValue(of([diferida]));
+    create();
+
+    const marca = fixture.nativeElement.querySelector('.planificacion__deferred');
+    expect(marca.getAttribute('title')).toContain('sin conexión');
+    expect(marca.getAttribute('title')).toContain('2026');
+  });
+
+  it('una visita diferida sin fecha no muestra una fecha inventada', () => {
+    vi.mocked(service.getVisits).mockReturnValue(of([{ ...diferida, syncedAt: null }]));
+    create();
+
+    const titulo = fixture.nativeElement
+      .querySelector('.planificacion__deferred')
+      .getAttribute('title');
+    expect(titulo).toBe('El acta se cargó sin conexión y se sincronizó después.');
   });
 
   it('muestra la hoja de ruta del operador con su orden', () => {
