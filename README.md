@@ -30,6 +30,31 @@ npm run lint        # ESLint; los warnings también fallan
 npm test            # tests con Vitest
 ```
 
+## Docker
+
+El backoffice se empaqueta como imagen **NGINX sin privilegios** (`Dockerfile`, multi-stage: Node 24
+compila y `nginxinc/nginx-unprivileged` sirve). Normalmente no se construye a mano: lo levanta el
+`docker-compose.yml` del repo `backend`, junto con el backend, PostgreSQL y MinIO (ver el README de
+`backend`).
+
+- **Build `docker`** (`ng build --configuration docker`): usa `src/app/environments/environment.docker.ts`
+  con `apiUrl: ''`, o sea **mismo origen**. El bundle llama a `/api/v1/...` y `/salud`, y NGINX los
+  proxya al servicio `backend`. Por eso no hace falta CORS y la imagen sirve en cualquier host o puerto.
+  El build de producción común sigue apuntando a `http://localhost:8080`.
+- **`docker/nginx.conf`**: gzip, headers de seguridad (CSP, HSTS, `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`), fallback de la SPA y el proxy al backend. Una ruta sin extensión
+  es de la SPA y cae en el `index.html`; una ruta con extensión (`/assets/x.png`) que no existe da 404.
+- **`docker/errors/`**: páginas propias para los errores 404, 502 y 503.
+- **CSP**: sólo permite recursos propios y los tiles de `https://tile.openstreetmap.org` (el mapa). Si se
+  suma otro origen externo (fuentes, analítica, otro proveedor de mapas), hay que declararlo en
+  `docker/nginx.conf`.
+
+Para construir la imagen sola (necesita un backend accesible con el nombre `backend` para el proxy):
+
+```bash
+docker build -t planillero-backoffice .
+```
+
 ## Autenticación
 
 El backoffice implementa el login administrativo completo contra los endpoints del backend:
