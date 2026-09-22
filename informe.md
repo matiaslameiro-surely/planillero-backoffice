@@ -26,7 +26,7 @@ Auditoría de seguridad del cliente web Backoffice Planillero (Angular 22) confo
 
 ## Video Demostrativo
 
-**Enlace público:** `[PENDIENTE - Insertar URL de YouTube / Google Drive]`
+**Enlace público:** `[Diferido a backlog - PLAN-32]` — *Decisión de Sprint 4: el video consolidado (backend + móvil + backoffice) se graba y publica en PLAN-32. Guion listo abajo; URL se inserta al grabar.*
 
 **Parte backoffice del video (incluida en video consolidado):**
 - Login SUPERVISOR / ADMINISTRATOR
