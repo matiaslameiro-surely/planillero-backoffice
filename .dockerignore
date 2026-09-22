@@ -1,0 +1,18 @@
+# Contexto de build mínimo y sin secretos.
+.git
+.gitignore
+.gitattributes
+node_modules
+dist
+.angular
+coverage
+.idea
+.vscode
+npm-debug.log
+README.md
+Dockerfile
+.dockerignore
+
+# Nunca deben entrar en una imagen.
+.env
+.env.*
