@@ -9,15 +9,18 @@
 ## 1. Resumen ejecutivo
 
 Se auditaron las **ocho pantallas** del backoffice contra **cinco heurísticas de Nielsen**, más una
-verificación medida de contraste y legibilidad. Se registran **33 hallazgos**.
+verificación medida de contraste y legibilidad. Se registran **36 hallazgos**.
 
 | Severidad | Cantidad |
 |---|---|
 | Crítica | 1 |
-| Alta | 8 |
+| Alta | 10 |
 | Media | 16 |
-| Baja | 8 |
-| **Total** | **33** |
+| Baja | 9 |
+| **Total** | **36** |
+
+> El recuento es reproducible sobre este mismo archivo:
+> `grep -E '^\| \`H[0-9]+\` \|' docs/auditoria-ux-ui.md | awk -F'|' '{gsub(/\*| /,"",$3); print $3}' | sort | uniq -c`
 
 El backoffice **funciona**, y en algunas decisiones está por encima del promedio: el panel de
 excepciones del tablero de supervisión, la marca «Diferida» que sólo señala lo anómalo, y el cruce
@@ -75,9 +78,52 @@ prueba y no dice dónde está el problema. Las rutas de las citas son relativas 
 contraria.
 
 Los **ratios de contraste** de la sección 8 no se estimaron a ojo: se calcularon con la fórmula de
-luminancia relativa de WCAG 2.1 (§ *contrast ratio*, con la corrección sRGB), sobre los 58 pares
+luminancia relativa de WCAG 2.1 (§ *contrast ratio*, con la corrección sRGB), sobre los 59 pares
 texto/fondo efectivamente presentes en la interfaz. Los colores con transparencia (`opacity`, `rgba`)
 se compusieron antes sobre su fondo real.
+
+### Cobertura: qué se revisó en cada pantalla
+
+Las ocho pantallas se inspeccionaron bajo las cinco heurísticas. Esta matriz dice, celda por celda, qué
+salió de cada cruce: un identificador de hallazgo, `✓` cuando se revisó y no se encontró nada que
+reportar, o `—` cuando la heurística no tiene superficie donde aplicarse en esa pantalla. Ninguna celda
+queda sin decidir.
+
+Las columnas son las cinco heurísticas (§3 a §7). Los hallazgos de **contraste y legibilidad** (§8) y de
+**layout a 1080p** (§9) no entran acá: son mediciones transversales con su propia sección, y varios
+afectan a más de una pantalla a la vez.
+
+| Pantalla | §3 Visibilidad | §4 Consistencia | §5 Prevención | §6 Reconocimiento | §7 Estética / excepciones |
+|---|---|---|---|---|---|
+| P1 login | ✓ | H6, H9, H11 | ✓ | ✓ | ✓ |
+| P2 home | ✓ | H6, H9, H11 | ✓ | H17 | H25 |
+| P3 planificación | H3 | H6, H8, H9, H10, H11 | H12, H13 | H17, H18 | ✓ |
+| P4 supervisión | H1, H2, H5 | H6, H7, H8, H9, H11 | ✓ | H17 | H23, H26 |
+| P5 auditoría | ✓ | H6, H8, H9 | ✓ | H19, H20, H22 | ✓ |
+| P6 evidencias | H4 | H6, H7, H8, H9, H11 | H15 | H18, H20, H21 | H24 |
+| P7 expediente | ✓ | H6, H7, H9, H11 | H14, H16 | H17, H18 | ✓ |
+| P8 acceso denegado | ✓ | H8, H9 | — | H17 | ✓ |
+
+Lectura de los `✓` y el `—`, que son afirmaciones y no huecos:
+
+- **P1 y P8 en prevención de errores.** El login declara los campos obligatorios
+  (`app/pages/login/login.ts:30-31`, y el código de 2FA además con patrón de seis dígitos, `:35`),
+  refleja la invalidez con `aria-invalid` y declara `autocomplete` correcto en ambos campos
+  (`app/pages/login/login.html:15-29`); acceso denegado no tiene más interacción que un enlace
+  (`app/pages/access-denied/access-denied.html:4`), así que no hay error que prevenir.
+- **P4 en prevención de errores.** El tablero es de sólo lectura: sus dos únicos controles son un
+  refresco idempotente y un selector de frecuencia (`app/pages/supervision/supervision.html:12-45`).
+  Ninguna acción tiene consecuencias que revertir.
+- **P5 en prevención de errores** es el caso ejemplar de la sección 5, no una ausencia de revisión.
+- **P1 en reconocimiento.** Es la única pantalla donde la falta de navegación global (`H17`) no es un
+  defecto: quien no inició sesión no debe ver el menú. Las etiquetas son visibles y no hay códigos
+  crudos.
+- **P3 y P6 en estética** aparecen en la sección 7 como aciertos deliberados.
+- **P1, P5 y P8 en estética.** Son pantallas de un solo propósito, sin densidad que administrar ni
+  excepciones que destacar.
+- **P7 en estética.** La ficha de datos y el formulario en sólo lectura no compiten por la atención ni
+  tienen excepciones que resaltar. Los problemas del expediente son de otra naturaleza y están en sus
+  secciones: legibilidad (`H31`) y aprovechamiento de la pantalla (`H34`).
 
 ### Escala de severidad
 
@@ -222,7 +268,7 @@ mientras el resto de la misma pantalla acentúa correctamente («Planificación 
 **`H11` — La elipsis de «en curso» se escribe de dos maneras · severidad: baja · transversal**
 Carácter `…` (U+2026) en «Asignando…» (`app/pages/planificacion/planificacion.html:57`) y «Consultando
 visitas…» (`:65`); tres puntos ASCII en «Actualizando...» (`app/pages/supervision/supervision.html:36`),
-«Auditando...» (`app/pages/evidence-viewer/evidence-viewer.html:31`) y «Cargando expediente...»
+«Auditando...» (`app/pages/evidence-viewer/evidence-viewer.html:33`) y «Cargando expediente...»
 (`app/pages/expediente/expediente.component.ts:18`).
 
 ---
@@ -276,7 +322,7 @@ pseudo-selector definido por la especificación es `:read-only`, con guion. La r
 parsear y nunca se aplica. Como el expediente digital renderiza el formulario en modo `readonly`
 (`app/pages/expediente/expediente.component.ts:51`), sus campos se ven **idénticos a campos editables**: el
 usuario descubre que no puede escribir sólo cuando lo intenta. El atributo HTML sí está bien puesto
-(`app/forms/fields/field-text.component.ts:23`), así que el dato está protegido; lo que falla es el aviso visual.
+(`app/forms/fields/field-text.component.ts:24`), así que el dato está protegido; lo que falla es el aviso visual.
 
 **`H15` — El cierre del visor pericial con Escape depende de dónde haya quedado el foco · severidad: media · P6**
 `app/pages/evidence-viewer/evidence-viewer.html:144-149`: el `(keydown.escape)` está en el `<div
@@ -352,14 +398,17 @@ copie y pegue, la correspondencia entre dos identificadores del mismo objeto.
 Cada tarjeta de la galería imprime el SHA-256 íntegro, 64 caracteres
 (`app/pages/evidence-viewer/evidence-viewer.html:131-134`), y el manifiesto hace lo mismo con la firma HMAC
 (`:41`). La propia pantalla demuestra que sabe hacerlo mejor: en la tabla de diagnóstico trunca a 16
-caracteres con puntos suspensivos (`:86-87`). Nadie compara 64 caracteres a ojo; para eso está el botón
+caracteres con puntos suspensivos (`:80-81`). Nadie compara 64 caracteres a ojo; para eso está el botón
 «Verificar Integridad Criptográfica».
 
 **`H22` — El código de evento se repite al lado de su propia traducción · severidad: baja · P5**
-`app/pages/auditoria/auditoria.html:111-118`: cada fila muestra la etiqueta legible del evento y, pegado,
-el código crudo en un `<code>`. El código ya está disponible en el `title` del badge y en el
-desplegable de filtro (`:50`), así que la columna lleva dos veces la misma información: la versión para
-humanos y la versión para máquinas, compitiendo por el mismo espacio.
+`app/pages/auditoria/auditoria.html:115` y `:117`: la misma celda muestra la etiqueta legible del evento
+—`eventLabel(...)`— y, pegado, el código crudo en un `<code>`. La columna lleva así dos veces la misma
+información, la versión para humanos y la versión para máquinas, compitiendo por el mismo espacio. El
+código crudo además vuelve a aparecer en cada opción del desplegable de filtro (`:54`), que lo imprime
+junto a la etiqueta.
+*Recomendación:* dejar en la grilla sólo la etiqueta legible; el código ya es accesible desde el filtro
+para quien lo necesite.
 
 ---
 
@@ -403,8 +452,8 @@ entera. La jerarquía está invertida respecto de la tarea real.
 
 **`H25` — El home es una pantalla de diagnóstico técnico, no un punto de entrada operativo · severidad: media · P2**
 `app/pages/home/home.html:12-31` dedica su tarjeta principal al estado de la conexión con el backend e
-imprime la URL de la API (`:35`). Son datos de desarrollo en la primera pantalla que ve el supervisor
-después de entrar; los accesos a su trabajo real quedan debajo, como enlaces sueltos (`:39-46`). La URL
+imprime la URL de la API (`:31`). Son datos de desarrollo en la primera pantalla que ve el supervisor
+después de entrar; los accesos a su trabajo real quedan debajo, como enlaces sueltos (`:34-41`). La URL
 del backend, además, no es información que un supervisor pueda usar ni deba ver.
 
 **`H26` — Hay contenido debajo del pliegue en el tablero a 1080p · severidad: baja · P4**
@@ -431,27 +480,28 @@ blanco por defecto del navegador y contra `#ffffff` se calculó.
 
 | Métrica | Valor |
 |---|---|
-| Pares texto/fondo evaluados | 58 |
-| **Incumplen WCAG AA** | **14 (24 %)** |
-| Textos por debajo de 12 px | 19 (33 %) |
+| Pares texto/fondo evaluados | 59 |
+| **Incumplen WCAG AA** | **15 (25 %)** |
+| Textos por debajo de 12 px | 21 (36 %) |
 | Texto más pequeño de la interfaz | 9 px (`app/pages/evidence-viewer/evidence-viewer.scss:38`) |
 
-### 8.3 Los 14 pares que incumplen AA
+### 8.3 Los 15 pares que incumplen AA
 
 | Elemento | Texto | Fondo | Tamaño | Ratio | Mínimo | Cita |
 |---|---|---|---|---|---|---|
 | **Botón primario (login y home)** | `#ffffff` | `#208aef` | 16 px | **3,53:1** | 4,5:1 | `app/pages/home/home.scss:100-103` |
-| **Botón secundario (ghost)** | `#208aef` | `#ffffff` | 16 px | **3,53:1** | 4,5:1 | `app/pages/home/home.scss:107-110` |
+| **Botón secundario (ghost)** | `#208aef` | `#ffffff` | 16 px | **3,53:1** | 4,5:1 | `app/pages/home/home.scss:112-116` |
 | Botón «Enviar» deshabilitado | `#ffffff` | `#a0c4e8` | 16 px | **1,82:1** | 4,5:1 | `app/forms/dynamic-form.component.ts:164` |
 | Subtexto de tarjeta KPI | `#94a3b8` | `#ffffff` | 11,2 px | **2,56:1** | 4,5:1 | `app/pages/supervision/supervision.scss:68` |
 | «Sin visita en curso» | `#94a3b8` | `#ffffff` | 11,2 px | **2,56:1** | 4,5:1 | `app/pages/supervision/supervision.scss:140` |
-| **«Evidencia intacta»** | `#16a34a` | `#ffffff` | 12 px | **3,30:1** | 4,5:1 | `app/pages/evidence-viewer/evidence-viewer.scss:27` |
-| **«Evidencia alterada»** | `#ef4444` | `#ffffff` | 12 px | **3,76:1** | 4,5:1 | `app/pages/evidence-viewer/evidence-viewer.scss:26` |
+| **«Evidencia intacta»** | `#16a34a` | `#ffffff` | 11 px | **3,30:1** | 4,5:1 | `app/pages/evidence-viewer/evidence-viewer.scss:27` |
+| **«Evidencia alterada»** (fila normal) | `#ef4444` | `#ffffff` | 11 px | **3,76:1** | 4,5:1 | `app/pages/evidence-viewer/evidence-viewer.scss:26` |
+| **«Evidencia alterada»** (fila marcada) | `#ef4444` | `#fff1f2` | 11 px | **3,43:1** | 4,5:1 | `app/pages/evidence-viewer/evidence-viewer.scss:24` |
 | Contador de excepciones | `#ffffff` | `#ef4444` | 10,4 px | **3,76:1** | 4,5:1 | `app/pages/supervision/supervision.scss:153` |
 | URL de la API (`opacity: .5`) | `#808080` ef. | `#ffffff` | 12 px | **3,95:1** | 4,5:1 | `app/pages/home/home.scss:69-74` |
 | Descripción de campo | `#718096` | `#ffffff` | 12 px | **4,02:1** | 4,5:1 | `app/forms/fields/field-boolean.component.ts:47` |
 | «Formulario sin campos» | `#718096` | `#ffffff` | 16 px | **4,02:1** | 4,5:1 | `app/forms/dynamic-form.component.ts:154` |
-| Etiquetas del expediente | `#718096` | `#ffffff` | 16 px | **4,02:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:82` |
+| Etiquetas del expediente | `#718096` | `#ffffff` | 14 px | **4,02:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:82` |
 | Nota «sólo lectura» | `#718096` | `#f7fafc` | 13 px | **3,83:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:84-85` |
 | Mensaje de error de campo | `#e53e3e` | `#ffffff` | 12 px | **4,13:1** | 4,5:1 | `app/forms/fields/field-text.component.ts:47` |
 
@@ -464,7 +514,7 @@ Es el color de todos los botones de acción del login y del home: el primer cont
 usuario con el sistema, en la pantalla que nadie puede saltear. Es además el único hallazgo que
 incumple un mínimo normativo en un elemento central, de ahí la severidad.
 *Recomendación:* oscurecer el token hasta alcanzar ≥ 4,5:1 sobre blanco. Con `#1268bd` el ratio sube a
-4,73:1 conservando el mismo matiz. Es un cambio de una línea.
+5,61:1 conservando el mismo matiz. Es un cambio de una línea.
 
 **`H28` — Un tercio de la interfaz está por debajo de 12 px · severidad: alta · P4, P6, P7**
 19 de los 58 textos evaluados bajan de 12 px, y la concentración está justo en la pantalla de decisión
@@ -480,8 +530,12 @@ de sobra (ver sección 9): la densidad no está comprada con nada.
 
 **`H29` — Los dos estados periciales que más importan son los que peor se leen · severidad: alta · P6**
 «Intacta» (`#16a34a`, 3,30:1) y «alterada» (`#ef4444`, 3,76:1), en
-`app/pages/evidence-viewer/evidence-viewer.scss:26-27`, son los dos peores contrastes de la pantalla después
-del botón deshabilitado, a 12 px. Son el veredicto de la cadena de custodia. Se agrava porque la
+`app/pages/evidence-viewer/evidence-viewer.scss:26-27`, son los dos peores contrastes de esa pantalla, y se
+leen a **11 px**, que es el tamaño que la fila les impone desde el contenedor
+(`app/pages/evidence-viewer/evidence-viewer.scss:21`). Son el veredicto de la cadena de custodia. El caso
+se agrava justo donde más importa: cuando la fila se marca como alterada, su propio fondo `#fff1f2`
+(`:24`) **baja** el contraste del texto rojo a **3,43:1**, así que el peor contraste de la pantalla es
+precisamente el de la evidencia manipulada. Se agrava además porque la
 distinción entre ambos estados es **sólo cromática** —verde contra rojo, el par que no distingue el 8 %
 de los varones con deuteranopía— sin icono ni texto diferenciador propio en la celda.
 *Recomendación:* subir el contraste de ambos y agregar un indicador no cromático.
