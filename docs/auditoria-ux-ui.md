@@ -97,12 +97,12 @@ afectan a más de una pantalla a la vez.
 |---|---|---|---|---|---|
 | P1 login | ✓ | H6, H9, H11 | ✓ | ✓ | ✓ |
 | P2 home | ✓ | H6, H9, H11 | ✓ | H17 | H25 |
-| P3 planificación | H3 | H6, H8, H9, H10, H11 | H12, H13 | H17, H18 | ✓ |
+| P3 planificación | H3 | H6, H7, H8, H9, H10, H11 | H12, H13 | H17, H18 | ✓ |
 | P4 supervisión | H1, H2, H5 | H6, H7, H8, H9, H11 | ✓ | H17 | H23, H26 |
-| P5 auditoría | ✓ | H6, H8, H9 | ✓ | H19, H20, H22 | ✓ |
-| P6 evidencias | H4 | H6, H7, H8, H9, H11 | H15 | H18, H20, H21 | H24 |
-| P7 expediente | ✓ | H6, H7, H9, H11 | H14, H16 | H17, H18 | ✓ |
-| P8 acceso denegado | ✓ | H8, H9 | — | H17 | ✓ |
+| P5 auditoría | ✓ | H6, H8, H9 | ✓ | H17, H19, H20, H22 | ✓ |
+| P6 evidencias | H4 | H6, H7, H8, H9, H11 | H15 | H17, H18, H20, H21 | H24 |
+| P7 expediente | ✓ | H6, H7, H8, H9, H11 | H14, H16 | H17, H18 | ✓ |
+| P8 acceso denegado | ✓ | H7, H8, H9 | — | H17 | ✓ |
 
 Lectura de los `✓` y el `—`, que son afirmaciones y no huecos:
 
@@ -115,10 +115,14 @@ Lectura de los `✓` y el `—`, que son afirmaciones y no huecos:
   refresco idempotente y un selector de frecuencia (`app/pages/supervision/supervision.html:12-45`).
   Ninguna acción tiene consecuencias que revertir.
 - **P5 en prevención de errores** es el caso ejemplar de la sección 5, no una ausencia de revisión.
+- **P2 en prevención de errores.** Sus dos únicas acciones son reintentar la verificación de conexión,
+  que es idempotente, y cerrar sesión, que no destruye nada recuperable
+  (`app/pages/home/home.html:43-55`).
 - **P1 en reconocimiento.** Es la única pantalla donde la falta de navegación global (`H17`) no es un
-  defecto: quien no inició sesión no debe ver el menú. Las etiquetas son visibles y no hay códigos
-  crudos.
-- **P3 y P6 en estética** aparecen en la sección 7 como aciertos deliberados.
+  defecto: quien no inició sesión no debe ver el menú, así que `H17` no figura en esa fila. Las
+  etiquetas son visibles y no hay códigos crudos.
+- **P3 en estética** aparece en la sección 7 como acierto deliberado. P4 y P6 también tienen aciertos
+  citados ahí, además de sus hallazgos.
 - **P1, P5 y P8 en estética.** Son pantallas de un solo propósito, sin densidad que administrar ni
   excepciones que destacar.
 - **P7 en estética.** La ficha de datos y el formulario en sólo lectura no compiten por la atención ni
@@ -501,7 +505,7 @@ blanco por defecto del navegador y contra `#ffffff` se calculó.
 | URL de la API (`opacity: .5`) | `#808080` ef. | `#ffffff` | 12 px | **3,95:1** | 4,5:1 | `app/pages/home/home.scss:69-74` |
 | Descripción de campo | `#718096` | `#ffffff` | 12 px | **4,02:1** | 4,5:1 | `app/forms/fields/field-boolean.component.ts:47` |
 | «Formulario sin campos» | `#718096` | `#ffffff` | 16 px | **4,02:1** | 4,5:1 | `app/forms/dynamic-form.component.ts:154` |
-| Etiquetas del expediente | `#718096` | `#ffffff` | 14 px | **4,02:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:82` |
+| Etiquetas del expediente | `#718096` | `#ffffff` | 14 px | **4,02:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:81-82` |
 | Nota «sólo lectura» | `#718096` | `#f7fafc` | 13 px | **3,83:1** | 4,5:1 | `app/pages/expediente/expediente.component.ts:84-85` |
 | Mensaje de error de campo | `#e53e3e` | `#ffffff` | 12 px | **4,13:1** | 4,5:1 | `app/forms/fields/field-text.component.ts:47` |
 
@@ -517,7 +521,7 @@ incumple un mínimo normativo en un elemento central, de ahí la severidad.
 5,61:1 conservando el mismo matiz. Es un cambio de una línea.
 
 **`H28` — Un tercio de la interfaz está por debajo de 12 px · severidad: alta · P4, P6, P7**
-19 de los 58 textos evaluados bajan de 12 px, y la concentración está justo en la pantalla de decisión
+21 de los 59 textos evaluados bajan de 12 px, y la concentración está justo en la pantalla de decisión
 en vivo: los badges de estado del operador van a `0.65rem` = **10,4 px**
 (`app/pages/supervision/supervision.scss:150`), los subtextos de KPI a `0.7rem` = 11,2 px (`:68`), las
 observaciones y la telemetría a 11,2 px (`:140-141`). El visor llega a **9 px** en la caja de hash
