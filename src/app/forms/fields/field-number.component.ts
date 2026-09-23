@@ -45,7 +45,7 @@ import { CommonModule } from '@angular/common';
       background: #fff;
       box-sizing: border-box;
     }
-    .field-input:readonly { background: #f7fafc; }
+    .field-input:read-only { background: #f7fafc; }
     .field-error { margin-top: 4px; font-size: 12px; color: #e53e3e; }
   `],
 })
