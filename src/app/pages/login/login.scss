@@ -17,7 +17,7 @@
 
   &__subtitle {
     margin: 0 0 $spacing-lg;
-    opacity: 0.6;
+    color: $color-text-muted;
   }
 
   &__card {
@@ -35,7 +35,7 @@
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    opacity: 0.6;
+    color: $color-text-muted;
   }
 
   &__input {
@@ -68,7 +68,9 @@
     cursor: pointer;
 
     &:disabled {
-      opacity: 0.6;
+      // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
+      background-color: #e2e8f0;
+      color: #475569;
       cursor: default;
     }
   }

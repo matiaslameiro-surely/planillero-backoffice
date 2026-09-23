@@ -92,7 +92,7 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      opacity: 0.6;
+      color: $color-text-muted;
     }
 
     & input,
@@ -115,7 +115,9 @@
     cursor: pointer;
 
     &:disabled {
-      opacity: 0.5;
+      // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
+      background-color: #e2e8f0;
+      color: #475569;
       cursor: default;
     }
   }
@@ -123,7 +125,7 @@
   &__hint {
     margin: 0;
     font-size: 0.85rem;
-    opacity: 0.7;
+    color: $color-text-muted;
   }
 
   &__table {
@@ -142,7 +144,7 @@
       font-size: $font-size-min;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      opacity: 0.6;
+      color: $color-text-muted;
     }
   }
 
@@ -180,7 +182,7 @@
   &__code {
     margin-left: $spacing-sm;
     font-size: $font-size-min;
-    opacity: 0.6;
+    color: $color-text-muted;
   }
 
   &__pager {
@@ -200,7 +202,7 @@
       cursor: pointer;
 
       &:disabled {
-        opacity: 0.5;
+        color: $color-text-muted;
         cursor: default;
       }
     }

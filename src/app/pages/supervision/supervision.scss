@@ -29,7 +29,8 @@
   &__controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 }
 
-.loading-inline { color: #0284c7; font-style: italic; font-size: 0.8rem; }
+// #0369a1 da 5,93:1; el celeste #0284c7 daba 4,10:1.
+.loading-inline { color: #0369a1; font-style: italic; font-size: 0.8rem; }
 .polling-selector {
   display: flex; align-items: center; gap: 4px; font-size: 0.8rem;
   select { padding: 3px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.8rem; }
