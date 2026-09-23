@@ -2,10 +2,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   OnDestroy,
   computed,
+  effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -17,7 +20,16 @@ import type {
   VisitUrgency,
 } from '../../core/models/planificacion.model';
 import { PlanificacionService } from '../../core/services/planificacion.service';
+import { FocusTrap } from '../../shared/directives/focus-trap';
 import { RouteMap } from './route-map/route-map';
+
+/** Asignación a la espera de que el supervisor la confirme. */
+interface PendingAssignment {
+  readonly operatorId: string;
+  readonly operatorUsername: string;
+  readonly date: string;
+  readonly visitIds: readonly string[];
+}
 
 /** Fecha de hoy en `YYYY-MM-DD` (la del reloj local del supervisor). */
 function todayIso(): string {
@@ -60,10 +72,15 @@ const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
  * Combina la grilla propia (sin librerías), los filtros y el mapa Leaflet: se elige fecha y
  * operador, se filtran visitas por estado y urgencia, se marcan las que van y se asignan de una.
  * Reasignar es asignarle a otro operador: el backend suelta la hoja anterior.
+ *
+ * Asignar es la única acción de la pantalla que le cambia la jornada a una persona real y no tiene
+ * deshacer, así que nunca sale directa: las dos formas de disparar la asignación —la de la fila y la
+ * de la cabecera— dejan una `PendingAssignment` y la llamada al backend recién ocurre si el
+ * supervisor confirma lo que el panel le nombra.
  */
 @Component({
   selector: 'app-planificacion',
-  imports: [RouterLink, RouteMap],
+  imports: [RouterLink, RouteMap, FocusTrap],
   templateUrl: './planificacion.html',
   styleUrl: './planificacion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,6 +103,9 @@ export class Planificacion implements OnDestroy {
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
+  /** Asignación esperando confirmación; `null` mientras no haya nada que confirmar. */
+  protected readonly pendingAssignment = signal<PendingAssignment | null>(null);
+
   private noticeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   ngOnDestroy(): void {
@@ -101,6 +121,24 @@ export class Planificacion implements OnDestroy {
     }, durationMs);
   }
 
+  /**
+   * Mientras el acuse tenga el foco, el mensaje se queda.
+   *
+   * El acuse se descarta solo a los 6 segundos, y al terminar de asignar el foco aterriza
+   * justamente ahí: sin esta pausa, el elemento enfocado desaparecería debajo del cursor de teclado
+   * y el foco volvería al principio del documento, que es el defecto que esta tarea vino a corregir.
+   */
+  protected pauseNoticeDismiss(): void {
+    this.clearNoticeTimeout();
+  }
+
+  /** Al salir del acuse vuelve a correr el reloj, para que el cartel no se quede para siempre. */
+  protected resumeNoticeDismiss(): void {
+    if (this.notice()) {
+      this.setNotice(this.notice()!);
+    }
+  }
+
   private clearNoticeTimeout(): void {
     if (this.noticeTimeoutId !== null) {
       clearTimeout(this.noticeTimeoutId);
@@ -111,13 +149,48 @@ export class Planificacion implements OnDestroy {
   protected readonly estados = ESTADOS;
   protected readonly urgencias = URGENCIAS;
 
+  /**
+   * Día de hoy, como piso del selector de fecha.
+   *
+   * No alcanza por sí solo —el campo admite tecleado—, pero evita el error más común, que es
+   * elegir con el calendario una fecha del mes que ya pasó. Se recalcula en cada lectura y no se
+   * congela al construir: esta pantalla queda abierta, y pasada la medianoche un piso viejo
+   * volvería a ofrecer un día ya vencido.
+   */
+  protected get minDate(): string {
+    return todayIso();
+  }
+
+  /**
+   * La fecha ya transcurrió: casi siempre es un error de tipeo, nunca una imposibilidad.
+   *
+   * Se pregunta por la fecha de la propuesta y no por la de la cabecera, que es la que se va a
+   * mandar: son la misma al abrir el panel, pero la advertencia tiene que hablar de lo que se
+   * confirma.
+   */
+  protected isPastDate(date: string): boolean {
+    return date < todayIso();
+  }
+
   /** Visitas de la hoja de ruta seleccionada, para el mapa. */
   protected readonly routeVisits = computed<Visit[]>(
     () => this.routeSheet()?.items.map((i) => i.visit) ?? [],
   );
   protected readonly selectedCount = computed(() => this.selected().size);
 
+  /** El acuse de la asignación, que recibe el foco cuando la operación termina bien. */
+  private readonly noticeBox = viewChild<ElementRef<HTMLElement>>('noticeBox');
+
   constructor() {
+    // Al terminar de asignar, el botón que abrió la confirmación queda deshabilitado —ya no hay
+    // nada marcado—, así que el foco no puede volver ahí. Va al acuse, que es lo que un lector de
+    // pantalla tiene que anunciar y lo que alguien que navega con teclado necesita leer.
+    effect(() => {
+      if (this.notice()) {
+        this.noticeBox()?.nativeElement.focus();
+      }
+    });
+
     this.loadOperators();
     this.reloadVisits();
     this.reloadRouteSheet();
@@ -179,29 +252,69 @@ export class Planificacion implements OnDestroy {
   }
 
   protected assignSelected(): void {
-    this.assign([...this.selected()]);
+    this.requestAssignment([...this.selected()]);
   }
 
-  /** Acción rápida: asigna una sola visita al operador y fecha de la cabecera. */
+  /** Acción rápida: propone asignar una sola visita al operador y fecha de la cabecera. */
   protected assignSingle(visit: Visit): void {
-    this.assign([visit.id]);
+    this.requestAssignment([visit.id]);
   }
 
-  private assign(visitIds: string[]): void {
+  /** Cierra el panel sin asignar. La selección queda como estaba: cancelar no descarta trabajo. */
+  protected cancelAssignment(): void {
+    this.pendingAssignment.set(null);
+  }
+
+  /**
+   * El panel sigue abierto mientras dura la llamada y se cierra recién al terminar.
+   *
+   * Cerrarlo en el acto dejaba el foco en el aire: el botón que lo abrió queda deshabilitado
+   * mientras se asigna, así que devolverle el foco en ese momento no hace nada y el supervisor que
+   * navega con teclado termina en el principio del documento.
+   */
+  protected confirmAssignment(): void {
+    const pending = this.pendingAssignment();
+    if (!pending || this.assigning()) {
+      return;
+    }
+    this.assign(pending);
+  }
+
+  /**
+   * Único camino hacia la asignación: arma la propuesta y la deja esperando confirmación.
+   *
+   * El nombre del operador se resuelve acá, contra la lista cargada, para que el panel pueda
+   * nombrarlo. Si el id no está en la lista, se cae al id: es preferible mostrar algo opaco que
+   * dejar la confirmación sin destinatario visible, que es justo lo que el hallazgo señala.
+   */
+  private requestAssignment(visitIds: string[]): void {
     const operatorId = this.selectedOperatorId();
     if (!operatorId || visitIds.length === 0) {
       return;
     }
+    const operator = this.operators().find((candidate) => candidate.id === operatorId);
+    this.pendingAssignment.set({
+      operatorId,
+      operatorUsername: operator?.username ?? operatorId,
+      date: this.selectedDate(),
+      visitIds,
+    });
+  }
+
+  private assign(pending: PendingAssignment): void {
+    const { operatorId, date } = pending;
+    const visitIds = [...pending.visitIds];
 
     this.error.set(null);
     this.clearNoticeTimeout();
     this.notice.set(null);
     this.assigning.set(true);
     this.planificacion
-      .assign({ operatorId, date: this.selectedDate(), visitIds })
+      .assign({ operatorId, date, visitIds })
       .subscribe({
         next: (sheet) => {
           this.assigning.set(false);
+          this.pendingAssignment.set(null);
           this.selected.set(new Set());
           this.setNotice(
             `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
@@ -213,6 +326,9 @@ export class Planificacion implements OnDestroy {
         },
         error: (error: unknown) => {
           this.assigning.set(false);
+          // También se cierra al fallar: el error se informa arriba, sobre la pantalla completa, y
+          // dejar el panel abierto invitaría a reintentar a ciegas lo que acaba de fallar.
+          this.pendingAssignment.set(null);
           this.error.set(messageOf(error));
         },
       });
@@ -220,13 +336,9 @@ export class Planificacion implements OnDestroy {
 
   private loadOperators(): void {
     this.planificacion.getOperators().subscribe({
-      next: (operators) => {
-        this.operators.set(operators);
-        if (operators.length > 0 && !this.selectedOperatorId()) {
-          this.selectedOperatorId.set(operators[0].id);
-          this.reloadRouteSheet();
-        }
-      },
+      // Nadie queda preseleccionado a propósito: si el desplegable arranca con un operador, todo
+      // parece elegido y un clic puede volcarle la jornada a alguien que el supervisor nunca miró.
+      next: (operators) => this.operators.set(operators),
       error: (error: unknown) => this.error.set(messageOf(error)),
     });
   }
