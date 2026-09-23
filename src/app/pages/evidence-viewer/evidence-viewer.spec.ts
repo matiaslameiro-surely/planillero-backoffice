@@ -80,9 +80,13 @@ describe('EvidenceViewer', () => {
   it('Escape cierra el modal desde cualquier punto de su contenido', () => {
     abrir();
 
-    (document.activeElement as HTMLElement).dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    // Desde un nodo profundo del contenido y no desde el botón de cerrar: el modal se abre con el
+    // foco en cualquier parte y Escape tiene que llegar igual al contenedor.
+    const profundo: HTMLElement = fixture.nativeElement.querySelector(
+      '.evidence-metadata-panel code',
     );
+    expect(profundo).not.toBeNull();
+    profundo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
 
     expect(modal()).toBeNull();

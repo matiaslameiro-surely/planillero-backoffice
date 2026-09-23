@@ -55,7 +55,14 @@ export class FocusTrap implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.previouslyFocused?.focus();
+    // Devolver el foco a un elemento que ya no está en el documento, o que quedó deshabilitado
+    // mientras el modal estaba abierto, es un no-op silencioso: el foco se cae al `body` y quien
+    // navega con teclado vuelve al principio de la página. Mejor no prometer lo que no se puede
+    // cumplir y que el anfitrión decida si tiene que dejar el disparador utilizable al cerrar.
+    const target = this.previouslyFocused;
+    if (target?.isConnected && !target.matches(':disabled')) {
+      target.focus();
+    }
   }
 
   protected onKeydown(event: KeyboardEvent): void {

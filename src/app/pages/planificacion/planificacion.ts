@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type {
@@ -102,11 +111,14 @@ export class Planificacion {
   /**
    * Día de hoy, como piso del selector de fecha.
    *
-   * No alcanza por sí solo —el campo admite tecleado y la pantalla puede quedar abierta cruzando la
-   * medianoche—, pero evita el error más común, que es elegir con el calendario una fecha del mes
-   * que ya pasó.
+   * No alcanza por sí solo —el campo admite tecleado—, pero evita el error más común, que es
+   * elegir con el calendario una fecha del mes que ya pasó. Se recalcula en cada lectura y no se
+   * congela al construir: esta pantalla queda abierta, y pasada la medianoche un piso viejo
+   * volvería a ofrecer un día ya vencido.
    */
-  protected readonly minDate = todayIso();
+  protected get minDate(): string {
+    return todayIso();
+  }
 
   /**
    * La fecha ya transcurrió: casi siempre es un error de tipeo, nunca una imposibilidad.
@@ -125,7 +137,19 @@ export class Planificacion {
   );
   protected readonly selectedCount = computed(() => this.selected().size);
 
+  /** El acuse de la asignación, que recibe el foco cuando la operación termina bien. */
+  private readonly noticeBox = viewChild<ElementRef<HTMLElement>>('noticeBox');
+
   constructor() {
+    // Al terminar de asignar, el botón que abrió la confirmación queda deshabilitado —ya no hay
+    // nada marcado—, así que el foco no puede volver ahí. Va al acuse, que es lo que un lector de
+    // pantalla tiene que anunciar y lo que alguien que navega con teclado necesita leer.
+    effect(() => {
+      if (this.notice()) {
+        this.noticeBox()?.nativeElement.focus();
+      }
+    });
+
     this.loadOperators();
     this.reloadVisits();
     this.reloadRouteSheet();
@@ -200,12 +224,18 @@ export class Planificacion {
     this.pendingAssignment.set(null);
   }
 
+  /**
+   * El panel sigue abierto mientras dura la llamada y se cierra recién al terminar.
+   *
+   * Cerrarlo en el acto dejaba el foco en el aire: el botón que lo abrió queda deshabilitado
+   * mientras se asigna, así que devolverle el foco en ese momento no hace nada y el supervisor que
+   * navega con teclado termina en el principio del documento.
+   */
   protected confirmAssignment(): void {
     const pending = this.pendingAssignment();
-    if (!pending) {
+    if (!pending || this.assigning()) {
       return;
     }
-    this.pendingAssignment.set(null);
     this.assign(pending);
   }
 
@@ -242,6 +272,7 @@ export class Planificacion {
       .subscribe({
         next: (sheet) => {
           this.assigning.set(false);
+          this.pendingAssignment.set(null);
           this.selected.set(new Set());
           this.notice.set(
             `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
@@ -253,6 +284,9 @@ export class Planificacion {
         },
         error: (error: unknown) => {
           this.assigning.set(false);
+          // También se cierra al fallar: el error se informa arriba, sobre la pantalla completa, y
+          // dejar el panel abierto invitaría a reintentar a ciegas lo que acaba de fallar.
+          this.pendingAssignment.set(null);
           this.error.set(messageOf(error));
         },
       });

@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { FocusTrap } from '../focus-trap';
+import { FocusTrap } from './focus-trap';
 
 /**
  * Anfitrión mínimo: un botón que abre el modal —el que después tiene que recuperar el foco— y un

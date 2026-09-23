@@ -235,6 +235,28 @@ describe('Planificacion', () => {
     expect(bulkButton().textContent).toContain('(0)');
   });
 
+  it('al confirmar el foco aterriza en el acuse y no se pierde en el body', () => {
+    // El fixture tiene que estar en el documento: si no, nada recibe foco y `activeElement` no se
+    // mueve del body.
+    create();
+    document.body.appendChild(fixture.nativeElement);
+    elegirOperador();
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+
+    bulkButton().focus();
+    bulkButton().click();
+    fixture.detectChanges();
+
+    confirmar();
+
+    // El disparador queda deshabilitado al vaciarse la selección, así que el foco no vuelve ahí:
+    // lo que no puede pasar es que se caiga al body y haya que tabular la pantalla entera.
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('.planificacion__feedback--ok'),
+    );
+  });
+
   it('cancelar no asigna y deja la seleccion intacta', () => {
     create();
     elegirOperador();
@@ -255,7 +277,15 @@ describe('Planificacion', () => {
   it('el input de fecha no ofrece dias ya pasados', () => {
     create();
 
-    expect(dateInput().getAttribute('min')).toBe(new Date().toISOString().slice(0, 10));
+    // El piso es el día del supervisor, no el de UTC: comparar contra `toISOString()` haría fallar
+    // el test todas las noches, en la franja en que el huso local y el UTC ya no coinciden.
+    const hoyLocal = new Date();
+    const esperado = [
+      hoyLocal.getFullYear(),
+      String(hoyLocal.getMonth() + 1).padStart(2, '0'),
+      String(hoyLocal.getDate()).padStart(2, '0'),
+    ].join('-');
+    expect(dateInput().getAttribute('min')).toBe(esperado);
   });
 
   it('con una fecha ya transcurrida la confirmacion lo advierte', () => {

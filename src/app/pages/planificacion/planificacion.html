@@ -8,7 +8,16 @@
     <p class="planificacion__feedback planificacion__feedback--error" role="alert">{{ error }}</p>
   }
   @if (notice(); as notice) {
-    <p class="planificacion__feedback planificacion__feedback--ok" role="status">{{ notice }}</p>
+    <!-- Enfocable por programa (tabindex="-1", no por Tab): es donde aterriza el foco al terminar
+         de asignar, porque el botón que abrió la confirmación queda deshabilitado al vaciarse la
+         selección y el acuse es justo lo que hay que leer en ese momento. -->
+    <p
+      #noticeBox
+      class="planificacion__feedback planificacion__feedback--ok"
+      role="status"
+      tabindex="-1">
+      {{ notice }}
+    </p>
   }
 
   <section class="planificacion__controls">
@@ -195,8 +204,14 @@
           Reasignar suelta la hoja de ruta anterior, y desde acá no se puede deshacer.
         </p>
 
+        <!-- El panel no se cierra al confirmar sino al terminar la llamada: así el botón que lo
+             abrió vuelve a estar habilitado cuando le toca recuperar el foco. -->
         <div class="planificacion__confirm-actions">
-          <button type="button" class="planificacion__link" (click)="cancelAssignment()">
+          <button
+            type="button"
+            class="planificacion__link"
+            (click)="cancelAssignment()"
+            [disabled]="assigning()">
             Cancelar
           </button>
           <button
@@ -204,7 +219,7 @@
             class="planificacion__primary"
             (click)="confirmAssignment()"
             [disabled]="assigning()">
-            Asignar
+            {{ assigning() ? 'Asignando…' : 'Asignar' }}
           </button>
         </div>
       </div>
