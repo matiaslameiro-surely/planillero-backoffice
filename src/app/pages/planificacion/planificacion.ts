@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  OnDestroy,
   computed,
   effect,
   inject,
@@ -84,7 +85,7 @@ const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
   styleUrl: './planificacion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Planificacion {
+export class Planificacion implements OnDestroy {
   private readonly planificacion = inject(PlanificacionService);
 
   protected readonly operators = signal<Operator[]>([]);
@@ -104,6 +105,46 @@ export class Planificacion {
 
   /** Asignación esperando confirmación; `null` mientras no haya nada que confirmar. */
   protected readonly pendingAssignment = signal<PendingAssignment | null>(null);
+
+  private noticeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnDestroy(): void {
+    this.clearNoticeTimeout();
+  }
+
+  protected setNotice(message: string, durationMs = 6000): void {
+    this.clearNoticeTimeout();
+    this.notice.set(message);
+    this.noticeTimeoutId = setTimeout(() => {
+      this.notice.set(null);
+      this.noticeTimeoutId = null;
+    }, durationMs);
+  }
+
+  /**
+   * Mientras el acuse tenga el foco, el mensaje se queda.
+   *
+   * El acuse se descarta solo a los 6 segundos, y al terminar de asignar el foco aterriza
+   * justamente ahí: sin esta pausa, el elemento enfocado desaparecería debajo del cursor de teclado
+   * y el foco volvería al principio del documento, que es el defecto que esta tarea vino a corregir.
+   */
+  protected pauseNoticeDismiss(): void {
+    this.clearNoticeTimeout();
+  }
+
+  /** Al salir del acuse vuelve a correr el reloj, para que el cartel no se quede para siempre. */
+  protected resumeNoticeDismiss(): void {
+    if (this.notice()) {
+      this.setNotice(this.notice()!);
+    }
+  }
+
+  private clearNoticeTimeout(): void {
+    if (this.noticeTimeoutId !== null) {
+      clearTimeout(this.noticeTimeoutId);
+      this.noticeTimeoutId = null;
+    }
+  }
 
   protected readonly estados = ESTADOS;
   protected readonly urgencias = URGENCIAS;
@@ -265,6 +306,7 @@ export class Planificacion {
     const visitIds = [...pending.visitIds];
 
     this.error.set(null);
+    this.clearNoticeTimeout();
     this.notice.set(null);
     this.assigning.set(true);
     this.planificacion
@@ -274,7 +316,7 @@ export class Planificacion {
           this.assigning.set(false);
           this.pendingAssignment.set(null);
           this.selected.set(new Set());
-          this.notice.set(
+          this.setNotice(
             `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
           );
           if (sheet.operatorId === this.selectedOperatorId()) {

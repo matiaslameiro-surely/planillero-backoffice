@@ -280,7 +280,10 @@
       padding: $spacing-sm $spacing-md;
       border: 1px solid $color-warning;
       border-radius: $radius-sm;
-      color: $color-warning;
+      // El borde puede quedar en $color-warning, que no es texto. La advertencia sí se lee, y
+      // #b9770e da 3,68:1 sobre blanco: por debajo del 4,5:1 que pide AA a este tamaño. Este tono,
+      // el mismo de la marca «Diferida» de la grilla, da 6,04:1.
+      color: #8a5806;
     }
 
     &-actions {

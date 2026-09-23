@@ -257,6 +257,35 @@ describe('Planificacion', () => {
     );
   });
 
+  it('el acuse no se descarta solo mientras tiene el foco', () => {
+    vi.useFakeTimers();
+    try {
+      create();
+      document.body.appendChild(fixture.nativeElement);
+      elegirOperador();
+      firstCheckbox()!.click();
+      fixture.detectChanges();
+      bulkButton().click();
+      fixture.detectChanges();
+      confirmar();
+
+      // El acuse se descarta solo a los 6 s, pero acá tiene el foco: si desapareciera debajo del
+      // cursor de teclado, el foco se caería al principio del documento.
+      vi.advanceTimersByTime(10_000);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.planificacion__feedback--ok')).not.toBeNull();
+
+      // Al salir del acuse vuelve a correr el reloj: el cartel no se queda para siempre.
+      (document.activeElement as HTMLElement).blur();
+      fixture.detectChanges();
+      vi.advanceTimersByTime(10_000);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.planificacion__feedback--ok')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('cancelar no asigna y deja la seleccion intacta', () => {
     create();
     elegirOperador();
@@ -404,5 +433,32 @@ describe('Planificacion', () => {
     expect(items.length).toBe(1);
     expect(items[0].textContent).toContain('V-1001');
     expect(items[0].textContent).toContain('1');
+  });
+
+  it('el aviso de asignacion exitosa caduca automaticamente tras un tiempo', () => {
+    vi.useFakeTimers();
+    create();
+    // La acción rápida ahora propone y no asigna: el acuse aparece recién al confirmar.
+    elegirOperador();
+
+    fixture.nativeElement.querySelectorAll('.planificacion__link')[0].click();
+    fixture.detectChanges();
+    confirmar();
+
+    const notice = () =>
+      fixture.nativeElement.querySelector('.planificacion__feedback--ok');
+    expect(notice()).not.toBeNull();
+    expect(notice()?.textContent).toContain('Asignadas 1 visita(s)');
+
+    // Al confirmar, el foco aterriza en el acuse y eso pausa el descarte automático a propósito.
+    // Este test mira el temporizador, así que se sale del acuse primero.
+    notice().blur();
+    fixture.detectChanges();
+
+    vi.advanceTimersByTime(6000);
+    fixture.detectChanges();
+
+    expect(notice()).toBeNull();
+    vi.useRealTimers();
   });
 });

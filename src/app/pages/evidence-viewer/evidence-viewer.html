@@ -11,8 +11,10 @@
   <section class="manifest-card">
     <div class="manifest-header">
       <div class="title-status">
-        <h2>Cadena de Custodia y Manifiesto</h2>
-        @if (manifest(); as m) {
+        <h2>Cadena de Custodia y Peritaje</h2>
+        @if (loadingManifest()) {
+          <span class="status-pill status-loading">CONSULTANDO MANIFIESTO...</span>
+        } @else if (manifest(); as m) {
           <span
             class="status-pill"
             [class.status-verified]="m.verificationStatus === 'VERIFIED'"
@@ -28,65 +30,102 @@
       <button
         class="verify-btn"
         (click)="verify()"
-        [disabled]="verifying() || !manifest()"
+        [disabled]="verifying() || !manifest() || loadingManifest()"
       >
-        {{ verifying() ? 'Auditando...' : 'Verificar Integridad Criptográfica' }}
+        {{ verifying() ? 'Auditando integridad...' : 'Verificar Integridad Criptográfica' }}
       </button>
     </div>
 
-    @if (manifest(); as m) {
-      <div class="manifest-meta">
-        <div class="meta-item">
-          <span class="meta-label">Firma Digital (HMAC-SHA256):</span>
-          <code class="meta-hash">{{ m.hmacSignature }}</code>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Dispositivo:</span>
-          <span>{{ m.deviceInfo || 'No informado' }}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Fecha de Sellado:</span>
-          <span>{{ m.createdAt | date: 'medium' }}</span>
-        </div>
-      </div>
-    }
-
-    <!-- Diagnóstico de Verificación pericial -->
-    @if (verification(); as v) {
-      <div
-        class="audit-report"
-        [class.audit-ok]="v.status === 'VERIFIED'"
-        [class.audit-alert]="v.status === 'TAMPERED'"
-      >
-        <div class="audit-summary">
-          <span class="audit-icon">{{ v.status === 'VERIFIED' ? '🛡️' : '⚠️' }}</span>
-          <div>
-            <strong>{{ v.status === 'VERIFIED' ? 'INTEGRIDAD COMPLETA VERIFICADA' : 'ALERTA DE MANIPULACIÓN (TAMPERED)' }}</strong>
-            <p>{{ v.message }}</p>
-          </div>
-        </div>
-
-        @if (v.evidences.length > 0) {
-          <div class="audit-details-table">
-            <div class="table-header">
-              <span>Evidencia ID</span>
-              <span>SHA-256 Esperado</span>
-              <span>SHA-256 Almacenado</span>
-              <span>Estado</span>
-            </div>
-            @for (ev of v.evidences; track ev.evidenceId) {
-              <div class="table-row" [class.row-tampered]="!ev.intact">
-                <code>{{ ev.evidenceId.substring(0, 8) }}...</code>
-                <code class="hash-cell">{{ ev.sha256Expected.substring(0, 16) }}...</code>
-                <code class="hash-cell">{{ ev.sha256Actual.substring(0, 16) }}...</code>
-                <span class="evidence-status" [class.status-intact]="ev.intact">
-                  {{ ev.status }}
-                </span>
-              </div>
+    <!-- Veredicto pericial prioritario: responde primero la pregunta esencial -->
+    <div
+      class="peritaje-verdict"
+      [class.peritaje-verdict--ok]="verification()?.status === 'VERIFIED' || (!verification() && manifest()?.verificationStatus === 'VERIFIED')"
+      [class.peritaje-verdict--tampered]="verification()?.status === 'TAMPERED' || (!verification() && manifest()?.verificationStatus === 'TAMPERED')"
+      [class.peritaje-verdict--pending]="!manifest() && !loadingManifest()"
+      [class.peritaje-verdict--loading]="loadingManifest()"
+    >
+      <div class="verdict-main">
+        <span class="verdict-icon">
+          @if (loadingManifest()) {
+            ⏳
+          } @else if (verification()?.status === 'TAMPERED' || (!verification() && manifest()?.verificationStatus === 'TAMPERED')) {
+            ⚠️
+          } @else if (verification()?.status === 'VERIFIED' || (!verification() && manifest()?.verificationStatus === 'VERIFIED')) {
+            🛡️
+          } @else {
+            📋
+          }
+        </span>
+        <div class="verdict-content">
+          <div class="verdict-title">
+            @if (loadingManifest()) {
+              Comprobando sellado pericial de evidencias...
+            } @else if (verification(); as v) {
+              {{ v.status === 'VERIFIED' ? 'INTEGRIDAD COMPLETA VERIFICADA' : 'ALERTA DE MANIPULACIÓN (TAMPERED)' }}
+            } @else if (manifest(); as m) {
+              {{ m.verificationStatus === 'VERIFIED' ? 'EVIDENCIA SELLADA Y VERIFICADA' : (m.verificationStatus === 'TAMPERED' ? 'ALERTA DE INTEGRIDAD PERICIAL' : 'EVIDENCIA REGISTRADA CON SELLADO') }}
+            } @else {
+              EVIDENCIA PENDIENTE DE SELLADO
             }
           </div>
-        }
+          <div class="verdict-desc">
+            @if (loadingManifest()) {
+              Recuperando la cadena de custodia y firmas criptográficas del servidor...
+            } @else if (verification(); as v) {
+              {{ v.message }}
+            } @else if (manifest(); as m) {
+              Manifiesto registrado el {{ m.createdAt | date: 'medium' }}. Haga clic en «Verificar Integridad Criptográfica» para auditar en vivo contra los hashes del almacenamiento.
+            } @else {
+              Aún no se ha generado el sellado criptográfico HMAC-SHA256 para las evidencias de esta visita.
+            }
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Diagnóstico de Verificación pericial activa -->
+    @if (verification(); as v) {
+      @if (v.evidences.length > 0) {
+        <div class="audit-details-table">
+          <div class="table-header">
+            <span>Evidencia ID</span>
+            <span>SHA-256 Esperado</span>
+            <span>SHA-256 Almacenado</span>
+            <span>Estado</span>
+          </div>
+          @for (ev of v.evidences; track ev.evidenceId) {
+            <div class="table-row" [class.row-tampered]="!ev.intact">
+              <code>{{ ev.evidenceId.substring(0, 8) }}...</code>
+              <code class="hash-cell">{{ ev.sha256Expected.substring(0, 16) }}...</code>
+              <code class="hash-cell">{{ ev.sha256Actual.substring(0, 16) }}...</code>
+              <span class="evidence-status" [class.status-intact]="ev.intact">
+                {{ ev.status }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Metadatos técnicos secundarios -->
+    @if (manifest(); as m) {
+      <details class="technical-meta-details">
+        <summary>Metadatos técnicos y firma criptográfica (HMAC-SHA256)</summary>
+        <div class="manifest-meta">
+          <div class="meta-item">
+            <span class="meta-label">Firma Digital (HMAC-SHA256):</span>
+            <code class="meta-hash">{{ m.hmacSignature }}</code>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Dispositivo de captura:</span>
+            <span>{{ m.deviceInfo || 'No informado' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Fecha de Sellado:</span>
+            <span>{{ m.createdAt | date: 'medium' }}</span>
+          </div>
+        </div>
+      </details>
     }
   </section>
 

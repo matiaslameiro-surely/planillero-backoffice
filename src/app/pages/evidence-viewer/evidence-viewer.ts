@@ -32,6 +32,7 @@ export class EvidenceViewer implements OnInit {
   protected readonly manifest = signal<VisitManifest | null>(null);
   protected readonly verification = signal<VerificationResult | null>(null);
   protected readonly loading = signal<boolean>(true);
+  protected readonly loadingManifest = signal<boolean>(true);
   protected readonly verifying = signal<boolean>(false);
   protected readonly selectedEvidence = signal<EvidenceItem | null>(null);
 
@@ -45,6 +46,7 @@ export class EvidenceViewer implements OnInit {
 
   protected loadData(id: string): void {
     this.loading.set(true);
+    this.loadingManifest.set(true);
     this.evidenceService.getEvidences(id).subscribe({
       next: (items) => {
         this.evidences.set(items);
@@ -56,8 +58,14 @@ export class EvidenceViewer implements OnInit {
     });
 
     this.evidenceService.getManifest(id).subscribe({
-      next: (m) => this.manifest.set(m),
-      error: () => this.manifest.set(null),
+      next: (m) => {
+        this.manifest.set(m);
+        this.loadingManifest.set(false);
+      },
+      error: () => {
+        this.manifest.set(null);
+        this.loadingManifest.set(false);
+      },
     });
   }
 

@@ -15,7 +15,9 @@
       #noticeBox
       class="planificacion__feedback planificacion__feedback--ok"
       role="status"
-      tabindex="-1">
+      tabindex="-1"
+      (focus)="pauseNoticeDismiss()"
+      (blur)="resumeNoticeDismiss()">
       {{ notice }}
     </p>
   }
