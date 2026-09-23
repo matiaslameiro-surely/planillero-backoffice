@@ -12,6 +12,23 @@ $color-error: #c0392b;
 $color-warning: #b9770e;
 $color-info: #6c3fc5;
 
+// Texto secundario (etiquetas, ayudas, datos atenuados). Da 5,74:1 sobre blanco y 5,48:1 sobre los
+// grises claros de fondo (#f7fafc, #f8fafc). Reemplaza a #94a3b8 y #718096, que no llegaban a 4,5:1,
+// y a la atenuación con opacity, cuyo contraste real no se veía leyendo el código.
+$color-text-muted: #5b6778;
+
+// Estados periciales. Van siempre con un símbolo además del color (✓ / ✗): verde contra rojo es el
+// par que no distingue una persona con deuteranopía.
+// Íntegro: 5,02:1 sobre blanco y 4,57:1 sobre #dcfce7.
+$color-status-ok: #15803d;
+// Alterado: 6,47:1 sobre blanco y 5,89:1 sobre el fondo de fila marcada #fff1f2.
+$color-status-alert: #b91c1c;
+
+// Piso tipográfico: nada por debajo de 12 px, y 13 px para lo que se lee de un vistazo (badges y
+// estados).
+$font-size-min: 0.75rem;
+$font-size-glance: 0.8125rem;
+
 $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 $spacing-lg: 1.5rem;
