@@ -38,8 +38,8 @@ import { CommonModule } from '@angular/common';
   styles: [`
     .field-container { margin-bottom: 16px; }
     .field-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
-    .required { color: #e53e3e; }
-    .field-description { font-size: 12px; color: #718096; margin: 0 0 8px; }
+    .required { color: #c0392b; /* $color-error: 5,44:1 */ }
+    .field-description { font-size: 12px; color: #5b6778; /* $color-text-muted: 5,74:1 */ margin: 0 0 8px; }
     .chips-container { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       display: inline-flex;
@@ -55,7 +55,7 @@ import { CommonModule } from '@angular/common';
     .chip-selected { background: #2b6cb0; border-color: #2b6cb0; }
     .chip-selected span { color: #fff; }
     .chip input { accent-color: #2b6cb0; }
-    .field-error { margin-top: 4px; font-size: 12px; color: #e53e3e; }
+    .field-error { margin-top: 4px; font-size: 12px; color: #c0392b; /* $color-error: 5,44:1 */ }
   `],
 })
 export class FieldMultiSelectComponent implements OnInit {

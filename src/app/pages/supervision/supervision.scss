@@ -10,7 +10,9 @@
   margin: 0 auto;
   box-sizing: border-box;
 
-  &--stale .kpi-card { opacity: 0.9; filter: grayscale(15%); }
+  // Sin opacity: atenuar así baja el contraste de todo el texto de la tarjeta sin que se vea en el
+  // código. El gris alcanza para marcar que el dato está viejo.
+  &--stale .kpi-card { filter: grayscale(15%); }
 }
 
 .supervision-header {
@@ -36,13 +38,14 @@
 .btn-refresh {
   padding: 4px 8px; border-radius: 4px; border: none; background: #0284c7; color: #fff;
   font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
-  &:disabled { opacity: 0.6; }
+  // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
+  &:disabled { background: #e2e8f0; color: #475569; }
 }
 
-.freshness-info { display: flex; flex-direction: column; gap: 2px; font-size: 0.72rem; color: #64748b; line-height: 1.2; }
+.freshness-info { display: flex; flex-direction: column; gap: 2px; font-size: $font-size-min; color: $color-text-muted; line-height: 1.2; }
 .relative-time { font-weight: 600; color: #0369a1; }
-.refresh-countdown { font-size: 0.68rem; color: #94a3b8; }
-.last-updated { font-size: 0.72rem; color: #475569; }
+.refresh-countdown { font-size: $font-size-min; color: $color-text-muted; }
+.last-updated { font-size: $font-size-min; color: #475569; }
 
 .alert--stale {
   padding: 6px 10px; background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 4px;
@@ -63,16 +66,16 @@
   background: #fff; padding: 6px 10px; border: 1px solid #e2e8f0; border-left: 3px solid #cbd5e1;
   border-radius: 4px; position: relative;
 
-  &__label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; color: #64748b; }
+  &__label { font-size: $font-size-min; font-weight: 600; text-transform: uppercase; color: $color-text-muted; }
   &__value { font-size: 1.2rem; font-weight: 700; margin: 1px 0; }
-  &__sub { font-size: 0.68rem; color: #94a3b8; }
+  &__sub { font-size: $font-size-min; color: $color-text-muted; }
 
   &--actionable {
     border-left-width: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     .kpi-card__value { font-size: 1.45rem; font-weight: 800; }
   }
   &__priority-tag {
-    position: absolute; top: 4px; right: 6px; font-size: 0.58rem; font-weight: 700;
+    position: absolute; top: 4px; right: 6px; font-size: $font-size-glance; font-weight: 700;
     text-transform: uppercase; background: #fef2f2; color: #b91c1c; padding: 1px 4px;
     border-radius: 2px; border: 1px solid #fecaca;
   }
@@ -81,7 +84,7 @@
   &--en-campo { border-left-color: #0284c7; color: #0284c7; }
   &--completo { border-left-color: #10b981; color: #059669; }
   &--sla { border-left-color: #8b5cf6; color: #7c3aed; }
-  &--context { opacity: 0.95; background: #fafafa; }
+  &--context { background: #fafafa; }
 }
 
 .exceptions-panel {
@@ -111,24 +114,28 @@
   &:hover { border-color: #94a3b8; }
   &--selected { border-color: #0284c7; background: #f0f9ff; }
   &--delayed { border-left-color: #f59e0b; }
-  &--offline { border-left-color: #94a3b8; opacity: 0.85; }
+  // Se distingue con el fondo y el borde, no con opacity: atenuar así bajaba el contraste de todo el
+  // texto de la tarjeta sin que se viera en el código.
+  &--offline { border-left-color: #94a3b8; background: #f8fafc; }
   &__top { display: flex; justify-content: space-between; margin-bottom: 4px; }
   &__name { font-weight: 600; font-size: 0.85rem; }
   &__progress { display: flex; justify-content: space-between; font-size: 0.75rem; color: #475569; margin-bottom: 4px; }
   &__visit {
     background: #f8fafc; padding: 4px; font-size: 0.75rem; margin-bottom: 4px;
     .visit-code { font-weight: 600; color: #0369a1; }
-    .visit-time { font-size: 0.7rem; color: #64748b; margin-left: 4px; }
+    .visit-time { font-size: $font-size-min; color: $color-text-muted; margin-left: 4px; }
   }
-  &__no-visit { font-size: 0.7rem; color: #94a3b8; font-style: italic; }
-  &__obs { font-size: 0.7rem; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 2px; }
+  &__no-visit { font-size: $font-size-min; color: $color-text-muted; font-style: italic; }
+  &__obs { font-size: $font-size-min; color: $color-text-muted; border-top: 1px dashed #e2e8f0; padding-top: 2px; }
 }
 
 .map-section .map-wrapper { height: 520px; }
 
 .badge {
-  display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 0.65rem; font-weight: 600;
-  &--count { background: #ef4444; color: #fff; }
+  display: inline-block; padding: 1px 4px; border-radius: 2px;
+  // 13 px: los badges de estado son lo que el supervisor lee de reojo.
+  font-size: $font-size-glance; font-weight: 600;
+  &--count { background: $color-status-alert; color: #fff; }
   &--out_of_sla { background: #fef2f2; color: #b91c1c; }
   &--low_battery { background: #fff7ed; color: #c2410c; }
   &--offline { background: #f1f5f9; color: #475569; }

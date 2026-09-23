@@ -139,7 +139,7 @@
     }
 
     th {
-      font-size: 0.72rem;
+      font-size: $font-size-min;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       opacity: 0.6;
@@ -179,7 +179,7 @@
 
   &__code {
     margin-left: $spacing-sm;
-    font-size: 0.72rem;
+    font-size: $font-size-min;
     opacity: 0.6;
   }
 

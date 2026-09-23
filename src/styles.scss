@@ -1,11 +1,17 @@
 /* Estilos globales de la aplicación y hojas de estilo de dependencias externas. */
 
+@use 'app/styles/variables' as *;
+
 @import 'leaflet/dist/leaflet.css';
 
 /* Global utility and status badge styles (PLAN-10: evidencias) */
-.status-pill{padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700}
-.status-verified{background:#dcfce7;color:#15803d}
-.status-tampered{background:#fee2e2;color:#b91c1c}
+/* 13 px: el estado del manifiesto se lee de un vistazo. */
+.status-pill{padding:3px 8px;border-radius:99px;font-size:$font-size-glance;font-weight:700}
+/* El símbolo distingue los estados sin depender del color. */
+.status-verified{background:#dcfce7;color:$color-status-ok}
+.status-verified::before{content:'✓ '}
+.status-tampered{background:#fee2e2;color:$color-status-alert}
+.status-tampered::before{content:'✗ '}
 .status-pending{background:#fef3c7;color:#b45309}
 .status-loading{background:#e0f2fe;color:#0369a1}
 .audit-report{margin-top:14px;padding:12px;border-radius:8px;border:1px solid}

@@ -151,7 +151,7 @@ interface FieldConfig {
   `,
   styles: [`
     .dynamic-form { padding: 16px; }
-    .empty-form { padding: 16px; text-align: center; color: #718096; }
+    .empty-form { padding: 16px; text-align: center; color: #5b6778; /* $color-text-muted: 5,74:1 */ }
     .form-fields { display: flex; flex-direction: column; gap: 16px; }
     .form-actions { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
     .btn-submit {
@@ -161,7 +161,8 @@ interface FieldConfig {
       background: #2b6cb0; color: #fff;
       font-size: 16px; font-weight: 600; cursor: pointer;
     }
-    .btn-submit:disabled { background: #a0c4e8; cursor: not-allowed; }
+    /* Deshabilitado pero legible: 6,15:1 (antes blanco sobre #a0c4e8, 1,82:1). */
+    .btn-submit:disabled { background: #e2e8f0; color: #475569; cursor: not-allowed; }
     .spinner {
       width: 20px; height: 20px;
       border: 2px solid #cbd5e0; border-top-color: #2b6cb0;

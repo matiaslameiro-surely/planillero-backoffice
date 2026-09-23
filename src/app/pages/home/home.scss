@@ -163,8 +163,12 @@
       filter: brightness(1.05);
     }
 
+    // Deshabilitado: gris con texto oscuro (6,15:1). Antes era opacity sobre el primario, con un
+    // contraste que nadie calculó; el usuario tiene que poder leer qué es lo que no puede hacer.
     &:disabled {
-      opacity: 0.6;
+      border-color: #e2e8f0;
+      background-color: #e2e8f0;
+      color: #475569;
       cursor: default;
     }
 
