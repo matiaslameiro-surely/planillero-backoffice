@@ -243,26 +243,11 @@
     }
   }
 
-  // Confirmación de asignación. Es una capa por encima de la pantalla y no un cartel más: lo que se
-  // confirma acá le define la jornada a una persona y no se puede deshacer.
-  &__overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    padding: $spacing-md;
-    background: var(--color-overlay);
-  }
-
+  // Confirmación de asignación. La base estructural (overlay fijo y tarjeta) proviene de las clases
+  // globales compartidas (.app-modal-overlay y .app-modal-dialog, PLAN-39).
   &__confirm {
-    // `margin: auto` dentro del flex centra en los dos ejes con una sola declaración.
-    margin: auto;
-    width: 100%;
     max-width: $layout-width-narrow;
-    box-sizing: border-box;
     padding: $spacing-lg;
-    border-radius: $radius-md;
-    background: var(--color-surface);
 
     &-title {
       margin: 0 0 $spacing-md;
