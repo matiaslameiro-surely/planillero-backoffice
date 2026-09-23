@@ -3,7 +3,9 @@
 //
 // Es un conjunto mínimo a propósito: el sistema de diseño está fuera del alcance del esqueleto.
 
-$color-primary: #208aef;
+// El primario debe dar >= 4,5:1 sobre blanco (WCAG 2.1 AA): es fondo de los botones de acción con
+// texto blanco encima, y texto sobre blanco en los secundarios. Este valor da 5,61:1.
+$color-primary: #1268bd;
 $color-border: #d9d9d9;
 $color-success: #1a9e5c;
 $color-error: #c0392b;
