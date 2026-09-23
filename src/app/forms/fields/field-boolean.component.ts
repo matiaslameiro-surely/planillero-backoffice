@@ -42,26 +42,26 @@ import { CommonModule } from '@angular/common';
     .field-container { margin-bottom: 16px; }
     .boolean-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .label-wrapper { flex: 1; }
-    .field-label { display: block; font-size: 14px; font-weight: 600; color: #1a1a1a; }
-    .required { color: #c0392b; /* $color-error: 5,44:1 */ }
-    .field-description { font-size: 12px; color: #5b6778; /* $color-text-muted: 5,74:1 */ margin: 2px 0 0; }
+    .field-label { display: block; font-size: 14px; font-weight: 600; color: var(--color-text); }
+    .required { color: var(--color-error); }
+    .field-description { font-size: 12px; color: var(--color-text-muted); margin: 2px 0 0; }
     .switch-label { position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer; }
     .switch-input { opacity: 0; width: 0; height: 0; position: absolute; }
     .switch-slider {
       position: absolute; cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #cbd5e0;
+      background-color: var(--color-border-strong);
       border-radius: 28px;
       transition: 0.3s;
     }
     .switch-slider:before {
       position: absolute; content: ""; height: 20px; width: 20px;
-      left: 4px; bottom: 4px; background-color: white;
+      left: 4px; bottom: 4px; background-color: var(--color-surface);
       border-radius: 50%; transition: 0.3s;
     }
-    input:checked + .switch-slider { background-color: #2b6cb0; }
+    input:checked + .switch-slider { background-color: var(--color-primary); }
     input:checked + .switch-slider:before { transform: translateX(24px); }
-    .field-error { margin-top: 4px; font-size: 12px; color: #c0392b; /* $color-error: 5,44:1 */ }
+    .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
   `],
 })
 export class FieldBooleanComponent {

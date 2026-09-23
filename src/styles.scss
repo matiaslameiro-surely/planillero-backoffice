@@ -4,16 +4,52 @@
 
 @import 'leaflet/dist/leaflet.css';
 
+/* Escala de color del sistema, expuesta como CSS custom properties. Es la única forma en que los
+   componentes con estilos embebidos (styles: [...] en el .ts) pueden consumir la escala, porque
+   no pueden @use de las variables SCSS de _variables.scss. Los valores viven ahí y se emiten acá. */
+:root {
+  --color-primary: #{$color-primary};
+  --color-text: #{$color-text};
+  --color-text-muted: #{$color-text-muted};
+  --color-text-disabled: #{$color-text-disabled};
+  --color-surface: #{$color-surface};
+  --color-surface-muted: #{$color-surface-muted};
+  --color-surface-subtle: #{$color-surface-subtle};
+  --color-border: #{$color-border};
+  --color-border-strong: #{$color-border-strong};
+  --color-status-ok: #{$color-status-ok};
+  --color-status-ok-bg: #{$color-status-ok-bg};
+  --color-status-ok-border: #{$color-status-ok-border};
+  --color-status-alert: #{$color-status-alert};
+  --color-status-alert-bg: #{$color-status-alert-bg};
+  --color-status-alert-border: #{$color-status-alert-border};
+  --color-status-pending: #{$color-status-pending};
+  --color-status-pending-bg: #{$color-status-pending-bg};
+  --color-status-pending-border: #{$color-status-pending-border};
+  --color-status-info: #{$color-status-info};
+  --color-status-info-bg: #{$color-status-info-bg};
+  --color-status-info-border: #{$color-status-info-border};
+  --color-status-neutral: #{$color-status-neutral};
+  --color-status-neutral-bg: #{$color-status-neutral-bg};
+  --color-success: #{$color-success};
+  --color-error: #{$color-error};
+  --color-warning: #{$color-warning};
+  --color-info: #{$color-info};
+  --color-overlay: #{$color-overlay};
+  --color-overlay-strong: #{$color-overlay-strong};
+  --color-overlay-light: #{$color-overlay-light};
+}
+
 /* Global utility and status badge styles (PLAN-10: evidencias) */
 /* 13 px: el estado del manifiesto se lee de un vistazo. */
 .status-pill{padding:3px 8px;border-radius:99px;font-size:$font-size-glance;font-weight:700}
 /* El símbolo distingue los estados sin depender del color. */
-.status-verified{background:#dcfce7;color:$color-status-ok}
+.status-verified{background:var(--color-status-ok-bg);color:var(--color-status-ok)}
 .status-verified::before{content:'✓ '}
-.status-tampered{background:#fee2e2;color:$color-status-alert}
+.status-tampered{background:var(--color-status-alert-bg);color:var(--color-status-alert)}
 .status-tampered::before{content:'✗ '}
-.status-pending{background:#fef3c7;color:#b45309}
-.status-loading{background:#e0f2fe;color:#0369a1}
+.status-pending{background:var(--color-status-pending-bg);color:var(--color-status-pending)}
+.status-loading{background:var(--color-status-info-bg);color:var(--color-status-info)}
 .audit-report{margin-top:14px;padding:12px;border-radius:8px;border:1px solid}
-.audit-ok{background:#f0fdf4;border-color:#86efac;color:#14532d}
-.audit-alert{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
+.audit-ok{background:var(--color-status-ok-bg);border-color:var(--color-status-ok-border);color:var(--color-status-ok)}
+.audit-alert{background:var(--color-status-alert-bg);border-color:var(--color-status-alert-border);color:var(--color-status-alert)}

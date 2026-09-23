@@ -17,7 +17,7 @@
 
   &__subtitle {
     margin: 0 0 $spacing-lg;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   &__card {
@@ -26,7 +26,7 @@
     width: 100%;
     max-width: 26rem;
     padding: $spacing-md;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
   }
 
@@ -35,25 +35,25 @@
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   &__input {
     margin-bottom: $spacing-md;
     padding: 0.625rem 0.75rem;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-sm;
     font-size: 1rem;
     font-family: inherit;
 
     &[aria-invalid='true'] {
-      border-color: $color-error;
+      border-color: var(--color-error);
     }
   }
 
   &__error {
     margin: 0 0 $spacing-md;
-    color: $color-error;
+    color: var(--color-error);
     font-size: 0.85rem;
   }
 
@@ -61,16 +61,16 @@
     padding: 0.75rem 1.75rem;
     border: none;
     border-radius: $radius-sm;
-    background-color: $color-primary;
-    color: #fff;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
 
     &:disabled {
       // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
-      background-color: #e2e8f0;
-      color: #475569;
+      background-color: var(--color-border);
+      color: var(--color-text-disabled);
       cursor: default;
     }
   }

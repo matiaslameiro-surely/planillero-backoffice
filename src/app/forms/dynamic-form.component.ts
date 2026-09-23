@@ -151,21 +151,21 @@ interface FieldConfig {
   `,
   styles: [`
     .dynamic-form { padding: 16px; }
-    .empty-form { padding: 16px; text-align: center; color: #5b6778; /* $color-text-muted: 5,74:1 */ }
+    .empty-form { padding: 16px; text-align: center; color: var(--color-text-muted); }
     .form-fields { display: flex; flex-direction: column; gap: 16px; }
     .form-actions { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
     .btn-submit {
       min-height: 48px; min-width: 48px;
       padding: 12px 24px;
       border: none; border-radius: 8px;
-      background: #2b6cb0; color: #fff;
+      background: var(--color-primary); color: var(--color-surface);
       font-size: 16px; font-weight: 600; cursor: pointer;
     }
-    /* Deshabilitado pero legible: 6,15:1 (antes blanco sobre #a0c4e8, 1,82:1). */
-    .btn-submit:disabled { background: #e2e8f0; color: #475569; cursor: not-allowed; }
+    /* Deshabilitado pero legible: 6,15:1 (antes texto blanco sobre el azul atenuado). */
+    .btn-submit:disabled { background: var(--color-border); color: var(--color-text-disabled); cursor: not-allowed; }
     .spinner {
       width: 20px; height: 20px;
-      border: 2px solid #cbd5e0; border-top-color: #2b6cb0;
+      border: 2px solid var(--color-border-strong); border-top-color: var(--color-primary);
       border-radius: 50%; animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }

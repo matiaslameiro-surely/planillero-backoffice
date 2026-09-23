@@ -22,7 +22,7 @@
   }
 
   &__back {
-    color: $color-primary;
+    color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
@@ -35,13 +35,13 @@
     border-radius: $radius-sm;
 
     &--error {
-      border: 1px solid $color-error;
-      color: $color-error;
+      border: 1px solid var(--color-error);
+      color: var(--color-error);
     }
 
     &--ok {
-      border: 1px solid $color-success;
-      color: $color-success;
+      border: 1px solid var(--color-success);
+      color: var(--color-success);
     }
   }
 
@@ -52,7 +52,7 @@
     gap: $spacing-md;
     margin: $spacing-md 0 $spacing-lg;
     padding: $spacing-md;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
   }
 
@@ -65,13 +65,13 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
 
     & input,
     & select {
       padding: 0.4rem 0.5rem;
-      border: 1px solid $color-border;
+      border: 1px solid var(--color-border);
       border-radius: $radius-sm;
       font-size: 0.9rem;
     }
@@ -82,16 +82,16 @@
     padding: 0.5rem 1rem;
     border: none;
     border-radius: $radius-sm;
-    background-color: $color-primary;
-    color: #fff;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
 
     &:disabled {
       // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
-      background-color: #e2e8f0;
-      color: #475569;
+      background-color: var(--color-border);
+      color: var(--color-text-disabled);
       cursor: default;
     }
   }
@@ -115,7 +115,7 @@
   &__hint {
     margin: 0;
     font-size: 0.85rem;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   &__table {
@@ -126,7 +126,7 @@
     th,
     td {
       padding: 0.5rem;
-      border-bottom: 1px solid $color-border;
+      border-bottom: 1px solid var(--color-border);
       text-align: left;
     }
 
@@ -134,24 +134,26 @@
       font-size: $font-size-min;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
   }
 
   &__row {
     &--blocked {
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
   }
 
   // Marca de acta sincronizada en diferido. No es una alerta: el trabajo offline es normal y
-  // esperado, así que se señala sin el rojo que el ojo lee como error.
+  // esperado, así que se señala sin el rojo que el ojo lee como error. Usa los tokens de estado
+  // «pendiente»: la paleta de grises de PLAN-25 no alcanza para un fondo con cuerpo sin recurrir a
+  // opacidad ni a un tono sin auditoría.
   &__deferred {
     display: inline-block;
     padding: 0.1rem 0.45rem;
     border-radius: 999px;
-    background: rgba(185, 119, 14, 0.15);
-    color: #8a5806;
+    background: var(--color-status-pending-bg);
+    color: var(--color-status-pending);
     font-size: $font-size-min;
     font-weight: 600;
     white-space: nowrap;
@@ -162,18 +164,18 @@
     padding: 0;
     border: none;
     background: none;
-    color: $color-primary;
+    color: var(--color-primary);
     font-size: 0.85rem;
     cursor: pointer;
 
     &:disabled {
-      color: $color-text-muted;
+      color: var(--color-text-muted);
       cursor: default;
     }
   }
 
   &__exp-link {
-    color: $color-primary;
+    color: var(--color-primary);
     font-size: 0.85rem;
     text-decoration: none;
 
@@ -187,7 +189,7 @@
     flex-direction: column;
     gap: $spacing-md;
     padding: $spacing-md;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
   }
 
@@ -205,7 +207,7 @@
 
     &-pos {
       font-weight: 700;
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
 
     &-code {
@@ -217,26 +219,26 @@
       text-transform: uppercase;
       padding: 0.1rem 0.35rem;
       border-radius: $radius-sm;
-      border: 1px solid $color-border;
+      border: 1px solid var(--color-border);
     }
 
     &-address {
-      color: #4b5563;
+      color: var(--color-text-muted);
     }
 
     &-link {
       margin-left: auto;
       padding: 0.2rem 0.5rem;
-      border: 1px solid $color-primary;
+      border: 1px solid var(--color-primary);
       border-radius: $radius-sm;
-      color: $color-primary;
+      color: var(--color-primary);
       font-size: $font-size-min;
       text-decoration: none;
       white-space: nowrap;
 
       &:hover {
-        background: $color-primary;
-        color: #fff;
+        background: var(--color-primary);
+        color: var(--color-surface);
       }
     }
   }
@@ -249,7 +251,7 @@
     z-index: 1000;
     display: flex;
     padding: $spacing-md;
-    background: rgba(15, 23, 42, 0.7);
+    background: var(--color-overlay);
   }
 
   &__confirm {
@@ -260,7 +262,7 @@
     box-sizing: border-box;
     padding: $spacing-lg;
     border-radius: $radius-md;
-    background: #fff;
+    background: var(--color-surface);
 
     &-title {
       margin: 0 0 $spacing-md;
@@ -280,12 +282,12 @@
     &-warning {
       margin: $spacing-md 0;
       padding: $spacing-sm $spacing-md;
-      border: 1px solid $color-warning;
+      border: 1px solid var(--color-warning);
       border-radius: $radius-sm;
-      // El borde puede quedar en $color-warning, que no es texto. La advertencia sí se lee, y
-      // #b9770e da 3,68:1 sobre blanco: por debajo del 4,5:1 que pide AA a este tamaño. Este tono,
-      // el mismo de la marca «Diferida» de la grilla, da 6,04:1.
-      color: #8a5806;
+      // El token de advertencia converge con el estado «pendiente» (5,02:1): el ámbar original
+      // daba 3,68:1 sobre blanco, por debajo del 4,5:1 que pide AA a este tamaño. Es el mismo tono
+      // de la marca «Diferida» de la grilla.
+      color: var(--color-warning);
     }
 
     &-actions {

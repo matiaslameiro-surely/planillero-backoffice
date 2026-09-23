@@ -11,20 +11,20 @@
   &__header {
     margin-bottom: $spacing-lg;
     padding-bottom: $spacing-md;
-    border-bottom: 1px solid $color-border;
+    border-bottom: 1px solid var(--color-border);
   }
 
   &__title {
     margin: 0 0 0.25rem;
     font-size: 1.75rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--color-text);
   }
 
   &__subtitle {
     margin: 0;
     font-size: 1rem;
-    color: #4b5563;
+    color: var(--color-text-muted);
   }
 
   &__grid {
@@ -38,8 +38,8 @@
     display: flex;
     flex-direction: column;
     padding: $spacing-md;
-    background-color: #ffffff;
-    border: 1px solid $color-border;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
@@ -54,7 +54,7 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-weight: 600;
   }
 
@@ -65,7 +65,7 @@
     margin: 0;
     font-size: 1.15rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-text);
   }
 
   &__dot {
@@ -74,25 +74,25 @@
     border-radius: 50%;
 
     &--ok {
-      background-color: $color-success;
+      background-color: var(--color-success);
     }
 
     &--error {
-      background-color: $color-error;
+      background-color: var(--color-error);
     }
   }
 
   &__hint {
     margin: $spacing-sm 0 0;
     font-size: 0.875rem;
-    color: #4b5563;
+    color: var(--color-text-muted);
   }
 
   &__url {
     margin: $spacing-sm 0 0;
     font-family: monospace;
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
     word-break: break-all;
   }
 
@@ -104,7 +104,7 @@
     margin: 0 0 $spacing-md;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-text);
   }
 
   &__links-grid {
@@ -117,8 +117,8 @@
     display: flex;
     flex-direction: column;
     padding: $spacing-lg;
-    background-color: #ffffff;
-    border: 1px solid $color-border;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
     text-decoration: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -126,11 +126,11 @@
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-      border-color: $color-primary;
+      border-color: var(--color-primary);
     }
 
     &:focus-visible {
-      outline: 2px solid $color-primary;
+      outline: 2px solid var(--color-primary);
       outline-offset: 2px;
     }
   }
@@ -138,13 +138,13 @@
   &__nav-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-text);
     margin-bottom: 0.35rem;
   }
 
   &__nav-desc {
     font-size: 0.875rem;
-    color: #4b5563;
+    color: var(--color-text-muted);
     line-height: 1.4;
   }
 
@@ -152,8 +152,8 @@
     padding: 0.5rem 1rem;
     border: none;
     border-radius: $radius-sm;
-    background-color: $color-primary;
-    color: #fff;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -166,9 +166,9 @@
     // Deshabilitado: gris con texto oscuro (6,15:1). Antes era opacity sobre el primario, con un
     // contraste que nadie calculó; el usuario tiene que poder leer qué es lo que no puede hacer.
     &:disabled {
-      border-color: #e2e8f0;
-      background-color: #e2e8f0;
-      color: #475569;
+      border-color: var(--color-border);
+      background-color: var(--color-border);
+      color: var(--color-text-disabled);
       cursor: default;
     }
 

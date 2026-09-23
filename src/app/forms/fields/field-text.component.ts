@@ -32,19 +32,19 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     .field-container { margin-bottom: 16px; }
-    .field-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #1a1a1a; }
-    .required { color: #c0392b; /* $color-error: 5,44:1 */ }
+    .field-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--color-text); }
+    .required { color: var(--color-error); }
     .field-input {
       width: 100%;
-      border: 1px solid #cbd5e0;
+      border: 1px solid var(--color-border-strong);
       border-radius: 8px;
       padding: 10px 12px;
       font-size: 16px;
-      background: #fff;
+      background: var(--color-surface);
       box-sizing: border-box;
     }
-    .field-input:read-only { background: #f7fafc; }
-    .field-error { margin-top: 4px; font-size: 12px; color: #c0392b; /* $color-error: 5,44:1 */ }
+    .field-input:read-only { background: var(--color-surface-muted); }
+    .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
   `],
 })
 export class FieldTextComponent implements OnInit {
