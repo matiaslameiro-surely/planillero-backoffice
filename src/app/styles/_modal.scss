@@ -1,0 +1,46 @@
+@use 'variables' as *;
+
+/* Patrón de modal / diálogo compartido (PLAN-39)
+   Proporciona la base estructural común para modales y cuadros de diálogo:
+   overlay fijo, fondo de clic (backdrop), tarjeta de contenido centrado y botón de cierre. */
+
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-md;
+  background: var(--color-overlay);
+  box-sizing: border-box;
+}
+
+.app-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.app-modal-dialog {
+  position: relative;
+  z-index: 1;
+  background: var(--color-surface);
+  border-radius: $radius-md;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.app-modal-close-btn {
+  background: transparent;
+  border: 0;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--color-text);
+  line-height: 1;
+  padding: 0;
+}

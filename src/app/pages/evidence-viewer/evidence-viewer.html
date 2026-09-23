@@ -184,7 +184,7 @@
          abierto y vuelve a la tarjeta al cerrarse. Escape colgaba de este mismo div, que no recibía
          foco nunca, así que en la práctica no cerraba nada. -->
     <div
-      class="lightbox-overlay"
+      class="lightbox-overlay app-modal-overlay"
       appFocusTrap
       role="dialog"
       aria-modal="true"
@@ -193,18 +193,18 @@
     >
       <button
         type="button"
-        class="lightbox-backdrop"
+        class="lightbox-backdrop app-modal-backdrop"
         (click)="closeSelected()"
         aria-label="Cerrar modal"
       ></button>
-      <div class="lightbox-modal">
+      <div class="lightbox-modal app-modal-dialog">
         <header class="lightbox-header">
           <h3>Inspección Pericial: {{ sel.fileName }}</h3>
           <!-- El foco entra acá y no en el fondo, que es un botón a pantalla completa sin nada
                visible que indique dónde quedó parado. -->
           <button
             type="button"
-            class="close-btn"
+            class="close-btn app-modal-close-btn"
             data-focus-initial
             aria-label="Cerrar"
             (click)="closeSelected()"

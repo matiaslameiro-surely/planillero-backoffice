@@ -46,10 +46,11 @@
                   "maximumWarning": "500kB",
                   "maximumError": "1MB"
                 },
+                /* Presupuesto fijado tomando como referencia la pantalla más pesada (supervision.scss, ~6,8 kB con KPIs, estados de operadores y media queries responsive), con un margen razonable de crecimiento antes de advertencia (PLAN-39). */
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
                 }
               ],
               "outputHashing": "all",
@@ -75,10 +76,11 @@
                   "maximumWarning": "500kB",
                   "maximumError": "1MB"
                 },
+                /* Presupuesto fijado tomando como referencia la pantalla más pesada (supervision.scss, ~6,8 kB con KPIs, estados de operadores y media queries responsive), con un margen razonable de crecimiento antes de advertencia (PLAN-39). */
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
                 }
               ],
               "outputHashing": "all",

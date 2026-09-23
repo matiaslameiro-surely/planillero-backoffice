@@ -177,9 +177,9 @@
   <!-- Asignar le define la jornada a una persona y no tiene deshacer: antes de llamar al backend se
        nombra en voz alta a quién, cuándo y cuántas visitas. -->
   @if (pendingAssignment(); as pending) {
-    <div class="planificacion__overlay">
+    <div class="planificacion__overlay app-modal-overlay">
       <div
-        class="planificacion__confirm"
+        class="planificacion__confirm app-modal-dialog"
         appFocusTrap
         role="dialog"
         aria-modal="true"
