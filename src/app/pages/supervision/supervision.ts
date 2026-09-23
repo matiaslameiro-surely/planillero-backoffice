@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription, interval } from 'rxjs';
 
+import { AppDayPipe, LabelPipe } from '../../core/display/display.pipes';
 import type { DashboardSummary, OperatorLiveStatus } from '../../core/models/supervision.model';
 import { SupervisionService } from '../../core/services/supervision.service';
 import { SupervisionMap } from './supervision-map/supervision-map';
@@ -21,7 +22,7 @@ import { SupervisionMap } from './supervision-map/supervision-map';
 @Component({
   selector: 'app-supervision',
   standalone: true,
-  imports: [CommonModule, FormsModule, SupervisionMap],
+  imports: [CommonModule, FormsModule, SupervisionMap, LabelPipe, AppDayPipe],
   templateUrl: './supervision.html',
   styleUrl: './supervision.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

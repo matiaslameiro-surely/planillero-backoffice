@@ -51,7 +51,7 @@
         aria-label="Tipo de evento">
         <option value="">Todos los eventos</option>
         @for (type of eventTypes; track type.code) {
-          <option [value]="type.code" [title]="type.description">{{ type.label }} ({{ type.code }})</option>
+          <option [value]="type.code" [title]="type.description">{{ type.label }}</option>
         }
       </select>
     </label>
@@ -106,7 +106,7 @@
         <tbody>
           @for (log of logs(); track log.id) {
             <tr>
-              <td>{{ log.createdAt }}</td>
+              <td>{{ log.createdAt | appDate }}</td>
               <td>
                 <span
                   class="auditoria__badge auditoria__badge--{{ eventTone(log.eventType) }}"
@@ -114,11 +114,12 @@
                   tabindex="0">
                   {{ eventLabel(log.eventType) }}
                 </span>
-                <code class="auditoria__code">{{ log.eventType }}</code>
               </td>
               <td>
-                <span [title]="entityDescription(log.entityType)">{{ log.entityType }}</span>
-                / {{ log.entityId }}
+                <span [title]="entityDescription(log.entityType)">{{ log.entityType | label: 'entityType' }}</span>
+                @if (log.entityId) {
+                  / <code class="auditoria__code" [title]="log.entityId">{{ log.entityId | shortId }}</code>
+                }
               </td>
               <td>{{ log.username }}</td>
               <td>{{ log.ip }}</td>

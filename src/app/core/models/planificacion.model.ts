@@ -1,5 +1,5 @@
 /** Estado de una visita en su ciclo de vida. */
-export type VisitStatus = 'PENDING' | 'ASSIGNED' | 'COMPLETED' | 'CANCELLED';
+export type VisitStatus = 'PENDING' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 /** Urgencia de una visita; define el orden dentro de la hoja de ruta. */
 export type VisitUrgency = 'LOW' | 'MEDIUM' | 'HIGH';

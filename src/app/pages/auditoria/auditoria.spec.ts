@@ -54,7 +54,7 @@ describe('Auditoria', () => {
     expect(vi.mocked(service.getLogs)).toHaveBeenCalledTimes(1);
     const rows = fixture.nativeElement.querySelectorAll('.auditoria__table tbody tr');
     expect(rows.length).toBe(1);
-    expect(rows[0].textContent).toContain('VISIT_STARTED');
+    expect(rows[0].textContent).toContain('Visita iniciada');
     expect(rows[0].textContent).toContain('operador.demo');
   });
 
@@ -142,6 +142,32 @@ describe('Auditoria', () => {
     expect(badge.classList).toContain('auditoria__badge--success');
     expect(badge.title).toContain('inició la visita');
     expect(fixture.nativeElement.querySelector('td span[title]').title.length).toBeGreaterThan(0);
+  });
+
+  it('muestra la fecha formateada, la entidad traducida y el código crudo sólo en tooltips', () => {
+    create();
+
+    const cells: NodeListOf<HTMLTableCellElement> = fixture.nativeElement.querySelectorAll('tbody td');
+    // Mismo instante que `entry.createdAt`, en la zona horaria de quien corre el test.
+    const local = new Date(entry.createdAt);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const expected =
+      `${pad(local.getDate())}/${pad(local.getMonth() + 1)}/${local.getFullYear()} ` +
+      `${pad(local.getHours())}:${pad(local.getMinutes())}`;
+    expect(cells[0].textContent?.trim()).toBe(expected);
+
+    expect(cells[1].textContent).not.toContain('VISIT_STARTED');
+    const badge: HTMLElement = cells[1].querySelector('.auditoria__badge')!;
+    expect(badge.title).toContain('VISIT_STARTED');
+
+    expect(cells[2].textContent).toContain('Visita');
+    expect(cells[2].textContent).not.toContain(entry.entityId);
+    const id: HTMLElement = cells[2].querySelector('code')!;
+    expect(id.textContent).toBe('a0000001…');
+    expect(id.title).toBe(entry.entityId);
+
+    const options: NodeListOf<HTMLOptionElement> = fixture.nativeElement.querySelectorAll('select option');
+    options.forEach((option) => expect(option.textContent).not.toMatch(/\([A-Z_]+\)/));
   });
 
   it('muestra un código de evento desconocido sin romper la grilla', () => {

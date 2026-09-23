@@ -13,12 +13,14 @@ import type {
   VisitManifest,
   VerificationResult,
 } from '../../core/models/evidence.model';
+import { AppDatePipe, LabelPipe, ShortIdPipe } from '../../core/display/display.pipes';
 import { EvidenceService } from '../../core/services/evidence.service';
 import { FocusTrap } from '../../shared/directives/focus-trap';
+import { VisitsApiService } from '../../visits/visits-api.service';
 
 @Component({
   selector: 'app-evidence-viewer',
-  imports: [CommonModule, RouterLink, FocusTrap],
+  imports: [CommonModule, RouterLink, FocusTrap, LabelPipe, ShortIdPipe, AppDatePipe],
   templateUrl: './evidence-viewer.html',
   styleUrl: './evidence-viewer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,8 +28,11 @@ import { FocusTrap } from '../../shared/directives/focus-trap';
 export class EvidenceViewer implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly evidenceService = inject(EvidenceService);
+  private readonly visitsApi = inject(VisitsApiService);
 
   protected readonly visitId = signal<string>('');
+  /** Código de la visita (el que el supervisor conoce). Vacío hasta que llega, o si no se puede leer. */
+  protected readonly visitCode = signal<string>('');
   protected readonly evidences = signal<EvidenceItem[]>([]);
   protected readonly manifest = signal<VisitManifest | null>(null);
   protected readonly verification = signal<VerificationResult | null>(null);
@@ -47,6 +52,12 @@ export class EvidenceViewer implements OnInit {
   protected loadData(id: string): void {
     this.loading.set(true);
     this.loadingManifest.set(true);
+    // Sólo para el título: si falla (un operador no tiene permiso sobre ese endpoint), el título
+    // cae al UUID abreviado y el resto de la pantalla sigue igual.
+    this.visitsApi.getVisitWithForm(id).subscribe({
+      next: (visit) => this.visitCode.set(visit.code),
+      error: () => this.visitCode.set(''),
+    });
     this.evidenceService.getEvidences(id).subscribe({
       next: (items) => {
         this.evidences.set(items);

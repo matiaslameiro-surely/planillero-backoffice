@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AppDatePipe, LabelPipe, ShortIdPipe } from '../../core/display/display.pipes';
 import {
   AUDIT_ENTITY_TYPE_DESCRIPTIONS,
   AUDIT_EVENT_TYPES,
@@ -44,7 +45,7 @@ function endOfDay(date: string): string | undefined {
  */
 @Component({
   selector: 'app-auditoria',
-  imports: [RouterLink],
+  imports: [RouterLink, LabelPipe, ShortIdPipe, AppDatePipe],
   templateUrl: './auditoria.html',
   styleUrl: './auditoria.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -116,8 +117,10 @@ export class Auditoria {
     return eventTypeInfo(code)?.label ?? code;
   }
 
+  /** Descripción para el tooltip del badge. El código crudo va acá, como dato secundario. */
   protected eventDescription(code: string): string {
-    return eventTypeInfo(code)?.description ?? 'Tipo de evento sin descripción registrada.';
+    const description = eventTypeInfo(code)?.description ?? 'Tipo de evento sin descripción registrada.';
+    return `${description} (código ${code})`;
   }
 
   protected eventTone(code: string): string {

@@ -108,8 +108,8 @@
                 </td>
                 <td>{{ visit.code }}</td>
                 <td>{{ visit.address }}</td>
-                <td>{{ visit.urgency }}</td>
-                <td>{{ visit.status }}</td>
+                <td>{{ visit.urgency | label: 'visitUrgency' }}</td>
+                <td>{{ visit.status | label: 'visitStatus' }}</td>
                 <td>
                   <!-- Sólo se marca lo que llegó en diferido. Poner también "En línea" en el resto
                        llenaría la grilla de una palabra que no aporta nada: lo excepcional es lo
@@ -150,14 +150,14 @@
 
       @if (routeSheet(); as sheet) {
         @if (sheet.items.length === 0) {
-          <p class="planificacion__hint">Sin asignaciones para {{ sheet.date }}.</p>
+          <p class="planificacion__hint">Sin asignaciones para {{ sheet.date | appDay }}.</p>
         } @else {
           <ol class="planificacion__route">
             @for (item of sheet.items; track item.position) {
               <li class="planificacion__route-item">
                 <span class="planificacion__route-pos">{{ item.position }}</span>
                 <span class="planificacion__route-code">{{ item.visit.code }}</span>
-                <span class="planificacion__route-urgency">{{ item.visit.urgency }}</span>
+                <span class="planificacion__route-urgency">{{ item.visit.urgency | label: 'visitUrgency' }}</span>
                 <span class="planificacion__route-address">{{ item.visit.address }}</span>
                 <a class="planificacion__route-link" [routerLink]="['/expediente', item.visit.id]">
                   Ver expediente
@@ -191,7 +191,7 @@
           Vas a asignarle
           <strong>{{ pending.visitIds.length }} visita(s)</strong> a
           <strong>{{ pending.operatorUsername }}</strong> para el
-          <strong>{{ pending.date }}</strong
+          <strong>{{ pending.date | appDay }}</strong
           >.
         </p>
 

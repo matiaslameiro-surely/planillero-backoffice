@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
+import { AppDatePipe, LabelPipe } from '../../core/display/display.pipes';
 import { DynamicFormComponent } from '../../forms/dynamic-form.component';
 import { ValidationService } from '../../forms/validation.service';
 import { FormsApiService } from '../../forms/forms-api.service';
@@ -11,7 +12,7 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
 @Component({
   selector: 'app-expediente',
   standalone: true,
-  imports: [CommonModule, DynamicFormComponent, RouterLink],
+  imports: [CommonModule, DynamicFormComponent, RouterLink, LabelPipe, AppDatePipe],
   template: `
     <div class="expediente-page">
       @if (loading) {
@@ -24,8 +25,8 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
             <a routerLink="/planificacion" class="back-link">← Volver a planificación</a>
             <h1>Expediente: {{ visit.code }}</h1>
             <div class="visit-meta">
-              <span class="status" [class]="getStatusClass()">{{ visit.status }}</span>
-              <span class="urgency">{{ visit.urgency }}</span>
+              <span class="status" [class]="getStatusClass()">{{ visit.status | label: 'visitStatus' }}</span>
+              <span class="urgency">{{ visit.urgency | label: 'visitUrgency' }}</span>
             </div>
           </header>
 
@@ -37,9 +38,9 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
                 <dt>Dirección</dt><dd>{{ visit.address }}</dd>
                 <dt>Coordenadas</dt><dd>{{ visit.latitude }}, {{ visit.longitude }}</dd>
                 <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction }}</dd>
-                <dt>Estado</dt><dd>{{ visit.status }}</dd>
-                <dt>Urgencia</dt><dd>{{ visit.urgency }}</dd>
-                <dt>Creada</dt><dd>{{ visit.createdAt | date:'short' }}</dd>
+                <dt>Estado</dt><dd>{{ visit.status | label: 'visitStatus' }}</dd>
+                <dt>Urgencia</dt><dd>{{ visit.urgency | label: 'visitUrgency' }}</dd>
+                <dt>Creada</dt><dd>{{ visit.createdAt | appDate }}</dd>
               </dl>
             </section>
 
@@ -54,7 +55,7 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
                     mode="readonly"
                   />
                   @if (visit.submittedAt) {
-                    <p class="submitted-at">Enviado: {{ visit.submittedAt | date:'short' }}</p>
+                    <p class="submitted-at">Enviado: {{ visit.submittedAt | appDate }}</p>
                   }
                 </section>
               } @else {

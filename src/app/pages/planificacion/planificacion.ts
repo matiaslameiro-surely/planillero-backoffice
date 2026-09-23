@@ -19,6 +19,8 @@ import type {
   VisitStatus,
   VisitUrgency,
 } from '../../core/models/planificacion.model';
+import { AppDayPipe, formatAppDate, LabelPipe } from '../../core/display/display.pipes';
+import { labelFor } from '../../core/display/labels';
 import { PlanificacionService } from '../../core/services/planificacion.service';
 import { FocusTrap } from '../../shared/directives/focus-trap';
 import { RouteMap } from './route-map/route-map';
@@ -51,19 +53,19 @@ function messageOf(error: unknown): string {
   return 'No se pudo completar la operación.';
 }
 
+const VISIT_STATUSES: VisitStatus[] = ['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const VISIT_URGENCIES: VisitUrgency[] = ['HIGH', 'MEDIUM', 'LOW'];
+
+// Las etiquetas de los filtros salen de la misma fuente que la grilla: si no, el filtro dice
+// «Alta» y la columna dice otra cosa.
 const ESTADOS: { value: VisitStatus | ''; label: string }[] = [
   { value: '', label: 'Estado (todos)' },
-  { value: 'PENDING', label: 'Pendiente' },
-  { value: 'ASSIGNED', label: 'Asignada' },
-  { value: 'COMPLETED', label: 'Completada' },
-  { value: 'CANCELLED', label: 'Cancelada' },
+  ...VISIT_STATUSES.map((value) => ({ value, label: labelFor('visitStatus', value) })),
 ];
 
 const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
   { value: '', label: 'Urgencia (todas)' },
-  { value: 'HIGH', label: 'Alta' },
-  { value: 'MEDIUM', label: 'Media' },
-  { value: 'LOW', label: 'Baja' },
+  ...VISIT_URGENCIES.map((value) => ({ value, label: labelFor('visitUrgency', value) })),
 ];
 
 /**
@@ -80,7 +82,7 @@ const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
  */
 @Component({
   selector: 'app-planificacion',
-  imports: [RouterLink, RouteMap, FocusTrap],
+  imports: [RouterLink, RouteMap, FocusTrap, LabelPipe, AppDayPipe],
   templateUrl: './planificacion.html',
   styleUrl: './planificacion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -235,9 +237,7 @@ export class Planificacion implements OnDestroy {
     if (!visit.syncedAt) {
       return 'El acta se cargó sin conexión y se sincronizó después.';
     }
-    return `El acta se cargó sin conexión y se sincronizó el ${new Date(
-      visit.syncedAt,
-    ).toLocaleString('es-AR')}.`;
+    return `El acta se cargó sin conexión y se sincronizó el ${formatAppDate(visit.syncedAt)}.`;
   }
 
   /** Marca o desmarca una visita para la asignación en bloque. */
