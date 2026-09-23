@@ -1,0 +1,73 @@
+<header class="navbar">
+  <div class="navbar__container">
+    <div class="navbar__brand">
+      <a routerLink="/" class="navbar__logo" aria-label="Planillero Backoffice - Inicio">
+        <span class="navbar__title">Planillero</span>
+        <span class="navbar__tag">Backoffice</span>
+      </a>
+    </div>
+
+    <nav class="navbar__nav" aria-label="Navegación principal">
+      <ul class="navbar__menu">
+        <li class="navbar__item">
+          <a
+            routerLink="/"
+            routerLinkActive="navbar__link--active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="navbar__link">
+            Inicio
+          </a>
+        </li>
+
+        @if (isSupervisor()) {
+          <li class="navbar__item">
+            <a
+              routerLink="/supervision"
+              routerLinkActive="navbar__link--active"
+              class="navbar__link">
+              Supervisión
+            </a>
+          </li>
+          <li class="navbar__item">
+            <a
+              routerLink="/planificacion"
+              routerLinkActive="navbar__link--active"
+              class="navbar__link">
+              Planificación
+            </a>
+          </li>
+        }
+
+        @if (isAdmin()) {
+          <li class="navbar__item">
+            <a
+              routerLink="/auditoria"
+              routerLinkActive="navbar__link--active"
+              class="navbar__link">
+              Auditoría
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="navbar__user">
+      @let u = user();
+      @if (u) {
+        <div class="navbar__user-info">
+          <span class="navbar__username">{{ u.username }}</span>
+          @if (u.roles.length > 0) {
+            <span class="navbar__role">{{ u.roles.join(', ') }}</span>
+          }
+        </div>
+      }
+      <button
+        type="button"
+        class="navbar__logout-btn"
+        (click)="signOut()"
+        aria-label="Cerrar sesión">
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+</header>

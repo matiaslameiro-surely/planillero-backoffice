@@ -1,8 +1,10 @@
 @use '../../styles/variables' as *;
 
 .auditoria {
-  max-width: 80rem;
+  width: 100%;
+  max-width: $layout-width-content;
   margin: 0 auto;
+  box-sizing: border-box;
   padding: $spacing-lg;
   font-family: $font-base;
 

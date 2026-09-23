@@ -1,0 +1,176 @@
+@use '../../../styles/variables' as *;
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #ffffff;
+  border-bottom: 1px solid $color-border;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-family: $font-base;
+
+  &__container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: $layout-width-wide;
+    margin: 0 auto;
+    padding: 0.75rem $spacing-lg;
+    gap: $spacing-md;
+    box-sizing: border-box;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__logo {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  &__tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.45rem;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border-radius: $radius-sm;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    margin-left: $spacing-lg;
+  }
+
+  &__menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.5rem;
+  }
+
+  &__item {
+    display: flex;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.85rem;
+    border-radius: $radius-sm;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+    text-decoration: none;
+    transition: color 0.15s ease, background-color 0.15s ease;
+
+    &:hover {
+      color: #111827;
+      background-color: #f3f4f6;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+
+    &--active {
+      color: $color-primary;
+      background-color: #eff6ff;
+      font-weight: 600;
+    }
+  }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  &__user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+
+  &__username {
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__role {
+    font-size: 0.6875rem;
+    color: #6b7280;
+    text-transform: capitalize;
+  }
+
+  &__logout-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #4b5563;
+    background: transparent;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      color: $color-error;
+      border-color: $color-error;
+      background-color: #fff5f5;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-error;
+      outline-offset: 2px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    &__container {
+      flex-wrap: wrap;
+      padding: 0.5rem $spacing-md;
+    }
+
+    &__nav {
+      order: 3;
+      width: 100%;
+      margin-left: 0;
+      overflow-x: auto;
+      padding-top: 0.5rem;
+    }
+
+    &__user-info {
+      display: none;
+    }
+  }
+}
