@@ -10,7 +10,16 @@ import type {
   VisitUrgency,
 } from '../../core/models/planificacion.model';
 import { PlanificacionService } from '../../core/services/planificacion.service';
+import { FocusTrap } from '../../shared/directives/focus-trap';
 import { RouteMap } from './route-map/route-map';
+
+/** Asignación a la espera de que el supervisor la confirme. */
+interface PendingAssignment {
+  readonly operatorId: string;
+  readonly operatorUsername: string;
+  readonly date: string;
+  readonly visitIds: readonly string[];
+}
 
 /** Fecha de hoy en `YYYY-MM-DD` (la del reloj local del supervisor). */
 function todayIso(): string {
@@ -53,10 +62,15 @@ const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
  * Combina la grilla propia (sin librerías), los filtros y el mapa Leaflet: se elige fecha y
  * operador, se filtran visitas por estado y urgencia, se marcan las que van y se asignan de una.
  * Reasignar es asignarle a otro operador: el backend suelta la hoja anterior.
+ *
+ * Asignar es la única acción de la pantalla que le cambia la jornada a una persona real y no tiene
+ * deshacer, así que nunca sale directa: las dos formas de disparar la asignación —la de la fila y la
+ * de la cabecera— dejan una `PendingAssignment` y la llamada al backend recién ocurre si el
+ * supervisor confirma lo que el panel le nombra.
  */
 @Component({
   selector: 'app-planificacion',
-  imports: [RouterLink, RouteMap],
+  imports: [RouterLink, RouteMap, FocusTrap],
   templateUrl: './planificacion.html',
   styleUrl: './planificacion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,8 +93,31 @@ export class Planificacion {
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
+  /** Asignación esperando confirmación; `null` mientras no haya nada que confirmar. */
+  protected readonly pendingAssignment = signal<PendingAssignment | null>(null);
+
   protected readonly estados = ESTADOS;
   protected readonly urgencias = URGENCIAS;
+
+  /**
+   * Día de hoy, como piso del selector de fecha.
+   *
+   * No alcanza por sí solo —el campo admite tecleado y la pantalla puede quedar abierta cruzando la
+   * medianoche—, pero evita el error más común, que es elegir con el calendario una fecha del mes
+   * que ya pasó.
+   */
+  protected readonly minDate = todayIso();
+
+  /**
+   * La fecha ya transcurrió: casi siempre es un error de tipeo, nunca una imposibilidad.
+   *
+   * Se pregunta por la fecha de la propuesta y no por la de la cabecera, que es la que se va a
+   * mandar: son la misma al abrir el panel, pero la advertencia tiene que hablar de lo que se
+   * confirma.
+   */
+  protected isPastDate(date: string): boolean {
+    return date < todayIso();
+  }
 
   /** Visitas de la hoja de ruta seleccionada, para el mapa. */
   protected readonly routeVisits = computed<Visit[]>(
@@ -150,25 +187,58 @@ export class Planificacion {
   }
 
   protected assignSelected(): void {
-    this.assign([...this.selected()]);
+    this.requestAssignment([...this.selected()]);
   }
 
-  /** Acción rápida: asigna una sola visita al operador y fecha de la cabecera. */
+  /** Acción rápida: propone asignar una sola visita al operador y fecha de la cabecera. */
   protected assignSingle(visit: Visit): void {
-    this.assign([visit.id]);
+    this.requestAssignment([visit.id]);
   }
 
-  private assign(visitIds: string[]): void {
+  /** Cierra el panel sin asignar. La selección queda como estaba: cancelar no descarta trabajo. */
+  protected cancelAssignment(): void {
+    this.pendingAssignment.set(null);
+  }
+
+  protected confirmAssignment(): void {
+    const pending = this.pendingAssignment();
+    if (!pending) {
+      return;
+    }
+    this.pendingAssignment.set(null);
+    this.assign(pending);
+  }
+
+  /**
+   * Único camino hacia la asignación: arma la propuesta y la deja esperando confirmación.
+   *
+   * El nombre del operador se resuelve acá, contra la lista cargada, para que el panel pueda
+   * nombrarlo. Si el id no está en la lista, se cae al id: es preferible mostrar algo opaco que
+   * dejar la confirmación sin destinatario visible, que es justo lo que el hallazgo señala.
+   */
+  private requestAssignment(visitIds: string[]): void {
     const operatorId = this.selectedOperatorId();
     if (!operatorId || visitIds.length === 0) {
       return;
     }
+    const operator = this.operators().find((candidate) => candidate.id === operatorId);
+    this.pendingAssignment.set({
+      operatorId,
+      operatorUsername: operator?.username ?? operatorId,
+      date: this.selectedDate(),
+      visitIds,
+    });
+  }
+
+  private assign(pending: PendingAssignment): void {
+    const { operatorId, date } = pending;
+    const visitIds = [...pending.visitIds];
 
     this.error.set(null);
     this.notice.set(null);
     this.assigning.set(true);
     this.planificacion
-      .assign({ operatorId, date: this.selectedDate(), visitIds })
+      .assign({ operatorId, date, visitIds })
       .subscribe({
         next: (sheet) => {
           this.assigning.set(false);
@@ -190,13 +260,9 @@ export class Planificacion {
 
   private loadOperators(): void {
     this.planificacion.getOperators().subscribe({
-      next: (operators) => {
-        this.operators.set(operators);
-        if (operators.length > 0 && !this.selectedOperatorId()) {
-          this.selectedOperatorId.set(operators[0].id);
-          this.reloadRouteSheet();
-        }
-      },
+      // Nadie queda preseleccionado a propósito: si el desplegable arranca con un operador, todo
+      // parece elegido y un clic puede volcarle la jornada a alguien que el supervisor nunca miró.
+      next: (operators) => this.operators.set(operators),
       error: (error: unknown) => this.error.set(messageOf(error)),
     });
   }

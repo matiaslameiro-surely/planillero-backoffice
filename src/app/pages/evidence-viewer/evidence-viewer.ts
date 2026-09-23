@@ -14,10 +14,11 @@ import type {
   VerificationResult,
 } from '../../core/models/evidence.model';
 import { EvidenceService } from '../../core/services/evidence.service';
+import { FocusTrap } from '../../shared/directives/focus-trap';
 
 @Component({
   selector: 'app-evidence-viewer',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FocusTrap],
   templateUrl: './evidence-viewer.html',
   styleUrl: './evidence-viewer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

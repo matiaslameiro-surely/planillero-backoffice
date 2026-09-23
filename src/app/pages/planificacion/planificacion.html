@@ -17,6 +17,7 @@
       <input
         type="date"
         [value]="selectedDate()"
+        [min]="minDate"
         (change)="onDateChange($event)"
         aria-label="Fecha de la planificación" />
     </label>
@@ -24,7 +25,9 @@
     <label class="planificacion__field">
       <span>Operador</span>
       <select (change)="onOperatorChange($event)" [value]="selectedOperatorId()" aria-label="Operador">
-        <option value="">Todos</option>
+        <!-- El valor vacío sigue siendo "sin filtro" para la grilla, pero la etiqueta ya no lo
+             insinúa: sin operador elegido no hay a quién asignarle nada. -->
+        <option value="">Elegí un operador (se listan todas las visitas)</option>
         @for (operator of operators(); track operator.id) {
           <option [value]="operator.id">{{ operator.username }} ({{ operator.jurisdiction }})</option>
         }
@@ -159,4 +162,52 @@
       <app-route-map [visits]="routeVisits()" />
     </aside>
   </section>
+
+  <!-- Asignar le define la jornada a una persona y no tiene deshacer: antes de llamar al backend se
+       nombra en voz alta a quién, cuándo y cuántas visitas. -->
+  @if (pendingAssignment(); as pending) {
+    <div class="planificacion__overlay">
+      <div
+        class="planificacion__confirm"
+        appFocusTrap
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmar-titulo"
+        (escape)="cancelAssignment()">
+        <h2 class="planificacion__confirm-title" id="confirmar-titulo">Confirmar asignación</h2>
+
+        <p class="planificacion__confirm-text">
+          Vas a asignarle
+          <strong>{{ pending.visitIds.length }} visita(s)</strong> a
+          <strong>{{ pending.operatorUsername }}</strong> para el
+          <strong>{{ pending.date }}</strong
+          >.
+        </p>
+
+        @if (isPastDate(pending.date)) {
+          <p class="planificacion__confirm-warning" role="alert">
+            Esa fecha ya pasó. Si no estás regularizando trabajo ya hecho, revisá el día antes de
+            confirmar.
+          </p>
+        }
+
+        <p class="planificacion__confirm-text">
+          Reasignar suelta la hoja de ruta anterior, y desde acá no se puede deshacer.
+        </p>
+
+        <div class="planificacion__confirm-actions">
+          <button type="button" class="planificacion__link" (click)="cancelAssignment()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="planificacion__primary"
+            (click)="confirmAssignment()"
+            [disabled]="assigning()">
+            Asignar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </main>

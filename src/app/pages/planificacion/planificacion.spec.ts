@@ -121,50 +121,172 @@ describe('Planificacion', () => {
     return fixture.nativeElement.querySelector(`select[aria-label="${ariaLabel}"]`);
   }
 
-  it('carga operadores y visitas, y deja el primero seleccionado', () => {
+  /** Elige el operador a mano: la pantalla ya no preselecciona a nadie. */
+  function elegirOperador(id: string = operator.id): void {
+    const select = findSelect('Operador');
+    select.value = id;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  function bulkButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('.planificacion__controls .planificacion__primary');
+  }
+
+  function confirmPanel(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('.planificacion__confirm');
+  }
+
+  /** Acepta la confirmación abierta. */
+  function confirmar(): void {
+    fixture.nativeElement.querySelector('.planificacion__confirm .planificacion__primary').click();
+    fixture.detectChanges();
+  }
+
+  function cancelar(): void {
+    fixture.nativeElement.querySelector('.planificacion__confirm .planificacion__link').click();
+    fixture.detectChanges();
+  }
+
+  /** Cambia la fecha de la cabecera, salteando el `min` del input (que sólo ata al calendario). */
+  function ponerFecha(valor: string): void {
+    const input = dateInput();
+    input.value = valor;
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  it('carga operadores y visitas sin preseleccionar a nadie', () => {
     create();
 
     expect(vi.mocked(service.getOperators)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(service.getVisits)).toHaveBeenCalledTimes(1);
-    // La fecha por defecto es la de hoy (`todayIso()` del componente), no la de la fixture: se lee
-    // del input real en vez de hardcodear un valor que queda viejo apenas cambia el día.
-    expect(vi.mocked(service.getRouteSheet)).toHaveBeenCalledWith(operator.id, dateInput().value);
+    // Nadie elegido: no se pide la hoja de ruta de un operador que el supervisor nunca nombró.
+    expect(vi.mocked(service.getRouteSheet)).not.toHaveBeenCalled();
+    expect(findSelect('Operador').value).toBe('');
 
     const rows = fixture.nativeElement.querySelectorAll('.planificacion__table tbody tr');
     expect(rows.length).toBe(1);
     expect(rows[0].textContent).toContain('V-1001');
+  });
+
+  it('sin operador elegido no se puede asignar por ninguna via', () => {
+    create();
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+
+    expect(bulkButton().disabled).toBe(true);
+    expect(
+      (fixture.nativeElement.querySelector('.planificacion__link') as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it('elegir un operador trae su hoja de ruta', () => {
+    create();
+    elegirOperador();
+
+    // La fecha por defecto es la de hoy (`todayIso()` del componente), no la de la fixture: se lee
+    // del input real en vez de hardcodear un valor que queda viejo apenas cambia el día.
+    expect(vi.mocked(service.getRouteSheet)).toHaveBeenCalledWith(operator.id, dateInput().value);
     expect(
       fixture.nativeElement.querySelector('.planificacion__side .planificacion__section')
         .textContent,
     ).toContain('ana');
   });
 
-  it('marca visitas y asigna en bloque con el operador y la fecha de la cabecera', () => {
+  it('asignar en bloque pide confirmacion antes de tocar el backend', () => {
     create();
+    elegirOperador();
     firstCheckbox()!.click();
     fixture.detectChanges();
 
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '.planificacion__primary',
-    );
-    button.click();
+    bulkButton().click();
     fixture.detectChanges();
+
+    // Lo que importa del hallazgo: el clic abre la confirmación y no asigna.
+    expect(vi.mocked(service.assign)).not.toHaveBeenCalled();
+    const panel = confirmPanel();
+    expect(panel).not.toBeNull();
+    expect(panel!.textContent).toContain('ana');
+    expect(panel!.textContent).toContain('1 visita(s)');
+    expect(panel!.textContent).toContain(dateInput().value);
+  });
+
+  it('confirmar asigna con el operador y la fecha de la cabecera', () => {
+    create();
+    elegirOperador();
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+    bulkButton().click();
+    fixture.detectChanges();
+
+    const fecha = dateInput().value;
+    confirmar();
 
     expect(vi.mocked(service.assign)).toHaveBeenCalledWith({
       operatorId: operator.id,
-      date: dateInput().value,
+      date: fecha,
       visitIds: [pendiente.id],
     });
+    expect(confirmPanel()).toBeNull();
     expect(fixture.nativeElement.querySelector('.planificacion__feedback--ok').textContent).toContain(
       'Asignadas 1 visita(s)',
     );
-    expect(fixture.nativeElement.querySelector('.planificacion__primary').textContent).toContain(
-      '(0)',
-    );
+    expect(bulkButton().textContent).toContain('(0)');
+  });
+
+  it('cancelar no asigna y deja la seleccion intacta', () => {
+    create();
+    elegirOperador();
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+    bulkButton().click();
+    fixture.detectChanges();
+
+    cancelar();
+
+    expect(vi.mocked(service.assign)).not.toHaveBeenCalled();
+    expect(confirmPanel()).toBeNull();
+    // Cancelar es arrepentirse de asignar, no perder lo que se venía marcando.
+    expect(bulkButton().textContent).toContain('(1)');
+    expect(firstCheckbox()!.checked).toBe(true);
+  });
+
+  it('el input de fecha no ofrece dias ya pasados', () => {
+    create();
+
+    expect(dateInput().getAttribute('min')).toBe(new Date().toISOString().slice(0, 10));
+  });
+
+  it('con una fecha ya transcurrida la confirmacion lo advierte', () => {
+    create();
+    elegirOperador();
+    ponerFecha('2020-01-15');
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+    bulkButton().click();
+    fixture.detectChanges();
+
+    const advertencia = fixture.nativeElement.querySelector('.planificacion__confirm-warning');
+    expect(advertencia).not.toBeNull();
+    expect(advertencia.textContent).toContain('ya pasó');
+    expect(confirmPanel()!.textContent).toContain('2020-01-15');
+  });
+
+  it('con la fecha de hoy la confirmacion no advierte nada', () => {
+    create();
+    elegirOperador();
+    firstCheckbox()!.click();
+    fixture.detectChanges();
+    bulkButton().click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.planificacion__confirm-warning')).toBeNull();
   });
 
   it('filtra por estado y urgencia al cambiar los selects', () => {
     create();
+    elegirOperador();
 
     const status = findSelect('Estado');
     status.value = 'ASSIGNED';
@@ -182,11 +304,17 @@ describe('Planificacion', () => {
     });
   });
 
-  it('asigna una sola visita desde la accion rapida de la fila', () => {
+  it('la accion rapida de la fila tambien pasa por la confirmacion', () => {
     create();
+    elegirOperador();
 
     fixture.nativeElement.querySelectorAll('.planificacion__link')[0].click();
     fixture.detectChanges();
+
+    expect(vi.mocked(service.assign)).not.toHaveBeenCalled();
+    expect(confirmPanel()).not.toBeNull();
+
+    confirmar();
 
     expect(vi.mocked(service.assign)).toHaveBeenCalledWith({
       operatorId: operator.id,
@@ -240,6 +368,7 @@ describe('Planificacion', () => {
 
   it('muestra la hoja de ruta del operador con su orden', () => {
     create();
+    elegirOperador();
 
     const items = fixture.nativeElement.querySelectorAll('.planificacion__route-item');
     expect(items.length).toBe(1);

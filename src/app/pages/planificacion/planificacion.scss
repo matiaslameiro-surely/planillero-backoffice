@@ -238,4 +238,63 @@
       }
     }
   }
+
+  // Confirmación de asignación. Es una capa por encima de la pantalla y no un cartel más: lo que se
+  // confirma acá le define la jornada a una persona y no se puede deshacer.
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    padding: $spacing-md;
+    background: rgba(15, 23, 42, 0.7);
+  }
+
+  &__confirm {
+    // `margin: auto` dentro del flex centra en los dos ejes con una sola declaración.
+    margin: auto;
+    width: 100%;
+    max-width: $layout-width-narrow;
+    box-sizing: border-box;
+    padding: $spacing-lg;
+    border-radius: $radius-md;
+    background: #fff;
+
+    &-title {
+      margin: 0 0 $spacing-md;
+      font-size: 1.1rem;
+    }
+
+    &-text,
+    &-warning {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    &-text {
+      margin: 0 0 $spacing-sm;
+    }
+
+    &-warning {
+      margin: $spacing-md 0;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $color-warning;
+      border-radius: $radius-sm;
+      color: $color-warning;
+    }
+
+    &-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-md;
+      margin-top: $spacing-lg;
+    }
+  }
+
+  // El botón de confirmar reusa __primary, que trae `margin-left: auto`: dentro de la botonera lo
+  // separaría de Cancelar en vez de dejarlos juntos a la derecha. Cancelar, por su parte, reusa
+  // __link, que es el botón de texto que la pantalla ya venía usando.
+  &__confirm-actions &__primary {
+    margin-left: 0;
+  }
 }
