@@ -31,6 +31,7 @@ vi.mock('leaflet', () => {
 
 import type { Operator, RouteSheet, Visit } from '../../core/models/planificacion.model';
 import { PlanificacionService } from '../../core/services/planificacion.service';
+import { formatAppDay } from '../../core/display/display.pipes';
 import { Planificacion } from './planificacion';
 
 /**
@@ -209,7 +210,8 @@ describe('Planificacion', () => {
     expect(panel).not.toBeNull();
     expect(panel!.textContent).toContain('ana');
     expect(panel!.textContent).toContain('1 visita(s)');
-    expect(panel!.textContent).toContain(dateInput().value);
+    // La fecha se muestra con el formato común de la app (dd/MM/yyyy), no en ISO.
+    expect(panel!.textContent).toContain(formatAppDay(dateInput().value));
   });
 
   it('confirmar asigna con el operador y la fecha de la cabecera', () => {
@@ -329,7 +331,7 @@ describe('Planificacion', () => {
     const advertencia = fixture.nativeElement.querySelector('.planificacion__confirm-warning');
     expect(advertencia).not.toBeNull();
     expect(advertencia.textContent).toContain('ya pasó');
-    expect(confirmPanel()!.textContent).toContain('2020-01-15');
+    expect(confirmPanel()!.textContent).toContain('15/01/2020');
   });
 
   it('con la fecha de hoy la confirmacion no advierte nada', () => {
