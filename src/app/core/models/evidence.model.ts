@@ -23,7 +23,7 @@ export interface VisitManifest {
   deviceInfo?: string;
   manifestData: string;
   hmacSignature: string;
-  verificationStatus: 'VERIFIED' | 'TAMPERED';
+  verificationStatus: 'VERIFIED' | 'TAMPERED' | 'PENDING';
   createdAt: string;
 }
 

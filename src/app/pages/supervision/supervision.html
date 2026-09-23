@@ -14,7 +14,7 @@
         @if (loading() && !summary()) {
           <span class="loading-inline">Cargando...</span>
         } @else {
-          <strong>{{ summary()?.date || '—' }}</strong>
+          <strong>{{ (summary()?.date | appDay) || '—' }}</strong>
         }
       </p>
     </div>
@@ -130,7 +130,7 @@
               <strong>{{ exc.operatorUsername }}</strong>: {{ exc.message }}
             </div>
             <div class="exception-item__meta">
-              <span class="badge badge--{{ exc.type.toLowerCase() }}">{{ exc.type }}</span>
+              <span class="badge badge--{{ exc.type.toLowerCase() }}">{{ exc.type | label: 'exceptionType' }}</span>
             </div>
           </div>
         }
@@ -160,14 +160,7 @@
           >
             <div class="operator-card__top">
               <span class="operator-card__name">{{ op.username }}</span>
-              <span class="badge status-{{ op.status.toLowerCase() }}">
-                @switch (op.status) {
-                  @case ('EN_CAMPO') { En campo }
-                  @case ('DEMORADO') { Demorado }
-                  @case ('OFFLINE') { Offline }
-                  @case ('TURNO_COMPLETO') { Turno completo }
-                }
-              </span>
+              <span class="badge status-{{ op.status.toLowerCase() }}">{{ op.status | label: 'shiftStatus' }}</span>
             </div>
 
             <div class="operator-card__progress">
@@ -178,7 +171,7 @@
                     Batería: {{ (op.batteryLevel * 100) | number:'1.0-0' }}%
                   </span>
                 }
-                &bull; Red: {{ op.networkStatus }}
+                &bull; Red: {{ op.networkStatus | label: 'networkStatus' }}
               </span>
             </div>
 

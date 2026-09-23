@@ -3,7 +3,7 @@
     <a routerLink="/" class="back-link">← Volver al Panel</a>
     <div class="header-content">
       <h1>Supervisión de Evidencias Digitales</h1>
-      <span class="visit-badge">Visita: {{ visitId() }}</span>
+      <span class="visit-badge" [title]="visitId()">Visita: {{ visitCode() || (visitId() | shortId) }}</span>
     </div>
   </header>
 
@@ -20,7 +20,7 @@
             [class.status-verified]="m.verificationStatus === 'VERIFIED'"
             [class.status-tampered]="m.verificationStatus === 'TAMPERED'"
           >
-            {{ m.verificationStatus }}
+            {{ m.verificationStatus | label: 'verificationStatus' }}
           </span>
         } @else {
           <span class="status-pill status-pending">PENDIENTE DE SELLADO</span>
@@ -61,7 +61,7 @@
             @if (loadingManifest()) {
               Comprobando sellado pericial de evidencias...
             } @else if (verification(); as v) {
-              {{ v.status === 'VERIFIED' ? 'INTEGRIDAD COMPLETA VERIFICADA' : 'ALERTA DE MANIPULACIÓN (TAMPERED)' }}
+              {{ v.status === 'VERIFIED' ? 'INTEGRIDAD COMPLETA VERIFICADA' : 'ALERTA DE MANIPULACIÓN' }}
             } @else if (manifest(); as m) {
               {{ m.verificationStatus === 'VERIFIED' ? 'EVIDENCIA SELLADA Y VERIFICADA' : (m.verificationStatus === 'TAMPERED' ? 'ALERTA DE INTEGRIDAD PERICIAL' : 'EVIDENCIA REGISTRADA CON SELLADO') }}
             } @else {
@@ -74,7 +74,7 @@
             } @else if (verification(); as v) {
               {{ v.message }}
             } @else if (manifest(); as m) {
-              Manifiesto registrado el {{ m.createdAt | date: 'medium' }}. Haga clic en «Verificar Integridad Criptográfica» para auditar en vivo contra los hashes del almacenamiento.
+              Manifiesto registrado el {{ m.createdAt | appDate }}. Haga clic en «Verificar Integridad Criptográfica» para auditar en vivo contra los hashes del almacenamiento.
             } @else {
               Aún no se ha generado el sellado criptográfico HMAC-SHA256 para las evidencias de esta visita.
             }
@@ -95,11 +95,11 @@
           </div>
           @for (ev of v.evidences; track ev.evidenceId) {
             <div class="table-row" [class.row-tampered]="!ev.intact">
-              <code>{{ ev.evidenceId.substring(0, 8) }}...</code>
-              <code class="hash-cell">{{ ev.sha256Expected.substring(0, 16) }}...</code>
-              <code class="hash-cell">{{ ev.sha256Actual.substring(0, 16) }}...</code>
+              <code [title]="ev.evidenceId">{{ ev.evidenceId | shortId }}</code>
+              <code class="hash-cell" [title]="ev.sha256Expected">{{ ev.sha256Expected | shortId: 16 }}</code>
+              <code class="hash-cell" [title]="ev.sha256Actual">{{ ev.sha256Actual | shortId: 16 }}</code>
               <span class="evidence-status" [class.status-intact]="ev.intact">
-                {{ ev.status }}
+                {{ ev.status | label: 'evidenceIntegrity' }}
               </span>
             </div>
           }
@@ -114,7 +114,7 @@
         <div class="manifest-meta">
           <div class="meta-item">
             <span class="meta-label">Firma Digital (HMAC-SHA256):</span>
-            <code class="meta-hash">{{ m.hmacSignature }}</code>
+            <code class="meta-hash" [title]="m.hmacSignature">{{ m.hmacSignature | shortId: 16 }}</code>
           </div>
           <div class="meta-item">
             <span class="meta-label">Dispositivo de captura:</span>
@@ -122,7 +122,7 @@
           </div>
           <div class="meta-item">
             <span class="meta-label">Fecha de Sellado:</span>
-            <span>{{ m.createdAt | date: 'medium' }}</span>
+            <span>{{ m.createdAt | appDate }}</span>
           </div>
         </div>
       </details>
@@ -160,16 +160,16 @@
             </div>
 
             <div class="card-body">
-              <span class="type-badge">{{ item.evidenceType }}</span>
+              <span class="type-badge">{{ item.evidenceType | label: 'evidenceType' }}</span>
               <h3 class="file-name">{{ item.fileName || 'Sin nombre' }}</h3>
               <p class="file-info">
                 {{ (item.fileSize / 1024).toFixed(1) }} KB ·
-                {{ item.capturedAt | date: 'short' }}
+                {{ item.capturedAt | appDate }}
               </p>
 
               <div class="hash-box">
                 <span class="hash-label">SHA-256:</span>
-                <code class="hash-code">{{ item.sha256Hash }}</code>
+                <code class="hash-code" [title]="item.sha256Hash">{{ item.sha256Hash | shortId: 16 }}</code>
               </div>
             </div>
           </article>
@@ -222,11 +222,11 @@
             <h4>Ficha de Cadena de Custodia</h4>
             <ul>
               <li><strong>ID:</strong> <code>{{ sel.id }}</code></li>
-              <li><strong>Tipo:</strong> {{ sel.evidenceType }}</li>
+              <li><strong>Tipo:</strong> {{ sel.evidenceType | label: 'evidenceType' }}</li>
               <li><strong>MIME Type:</strong> {{ sel.contentType }}</li>
               <li><strong>Tamaño:</strong> {{ sel.fileSize }} bytes</li>
-              <li><strong>Fecha Captura:</strong> {{ sel.capturedAt }}</li>
-              <li><strong>Ingesta Servidor:</strong> {{ sel.createdAt }}</li>
+              <li><strong>Fecha Captura:</strong> {{ sel.capturedAt | appDate }}</li>
+              <li><strong>Ingesta Servidor:</strong> {{ sel.createdAt | appDate }}</li>
               <li>
                 <strong>Digest SHA-256:</strong>
                 <code class="full-hash">{{ sel.sha256Hash }}</code>
