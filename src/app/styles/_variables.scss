@@ -1,31 +1,87 @@
 // Tokens de diseño. Todo color, espaciado o radio sale de acá: nada se escribe a mano en los
 // componentes.
 //
-// Es un conjunto mínimo a propósito: el sistema de diseño está fuera del alcance del esqueleto.
+// La escala de color es la única fuente de verdad y se expone como CSS custom properties en
+// `src/styles.scss` (bloque `:root`): los componentes con estilos embebidos y las hojas de página
+// la consumen con `var(--color-*)`. Nada de valores literales fuera de este archivo.
 
+// --- Acción primaria -------------------------------------------------------
 // El primario debe dar >= 4,5:1 sobre blanco (WCAG 2.1 AA): es fondo de los botones de acción con
-// texto blanco encima, y texto sobre blanco en los secundarios. Este valor da 5,61:1.
+// texto blanco encima, y texto sobre blanco en los secundarios. Este valor da 5,61:1. Unifica a
+// los cuatro azules que la auditoría H6 encontró para el mismo rol visual.
 $color-primary: #1268bd;
-$color-border: #d9d9d9;
-$color-success: #1a9e5c;
+
+// --- Texto ---------------------------------------------------------------
+// Texto principal: los títulos y el cuerpo duro. Reemplaza a #1a1a1a.
+$color-text: #111827;
+// Texto secundario (etiquetas, ayudas, datos atenuados). Da 5,74:1 sobre blanco y 5,48:1 sobre los
+// grises claros de fondo (#f7fafc, #f8fafc). Reemplaza a #94a3b8, #718096 y #4b5563, que no
+// llegaban o llegaban justos a 4,5:1, y a la atenuación con opacity.
+$color-text-muted: #5b6778;
+// Texto sobre fondo deshabilitado (#e2e8f0): 6,15:1 (la atenuación con opacity no da un contraste
+// verificable leyendo el código).
+$color-text-disabled: #475569;
+
+// --- Superficies ----------------------------------------------------------
+$color-surface: #ffffff;
+// Fondos casi blancos: encabezados de tabla, campos readonly, paneles sobre la página.
+$color-surface-muted: #f8fafc;
+// Fondo gris claro: lugares donde la superficie requiere un paso más de profundidad.
+$color-surface-subtle: #f1f5f9;
+
+// --- Bordes ---------------------------------------------------------------
+// Borde estándar de tarjetas, separadores y estados deshabilitados. Unifica al gris que ya usaban
+// tablas, tarjetas y navbar (#e2e8f0) sobre el #d9d9d9 del token original.
+$color-border: #e2e8f0;
+// Borde de control interactivo: inputs, chips, selects, spinners.
+$color-border-strong: #cbd5e0;
+
+// --- Estados --------------------------------------------------------------
+// Cada estado conserva su semántica y se declara con texto, fondo y borde: el par texto/fondo es lo
+// que se audita contra WCAG AA. Van siempre con un símbolo además del color cuando representan un
+// veredicto (✓ / ✗), porque verde contra rojo es el par que no distingue una persona con
+// deuteranopía.
+// Íntegro / completo: texto 5,02:1 sobre blanco y 4,57:1 sobre su fondo.
+$color-status-ok: #15803d;
+$color-status-ok-bg: #dcfce7;
+$color-status-ok-border: #86efac;
+// Alterado / error: texto 6,47:1 sobre blanco y 5,89:1 sobre su fondo.
+$color-status-alert: #b91c1c;
+$color-status-alert-bg: #fee2e2;
+$color-status-alert-border: #fca5a5;
+// Pendiente / demorado / advertencia: texto 5,02:1 sobre blanco y AA sobre su fondo.
+$color-status-pending: #b45309;
+$color-status-pending-bg: #fef3c7;
+$color-status-pending-border: #fde68a;
+// Informativo / celeste: texto 5,93:1 sobre blanco y AA sobre su fondo.
+$color-status-info: #0369a1;
+$color-status-info-bg: #e0f2fe;
+$color-status-info-border: #bae6fd;
+// Neutro / offline: texto AA sobre su fondo.
+$color-status-neutral: #475569;
+$color-status-neutral-bg: #f1f5f9;
+
+// --- Semánticos generales -------------------------------------------------
+// Convergen a los tokens de estado (criterio AA de la escala): «éxito» y «advertencia» son los
+// mismos verdes/ámbars que usan los estados periciales. Los roles de planificacion y auditoria los
+// consumen como texto (feedback, badges) y deben cumplir 4,5:1.
+$color-success: $color-status-ok;
 $color-error: #c0392b;
-$color-warning: #b9770e;
+$color-warning: $color-status-pending;
 $color-info: #6c3fc5;
 
-// Texto secundario (etiquetas, ayudas, datos atenuados). Da 5,74:1 sobre blanco y 5,48:1 sobre los
-// grises claros de fondo (#f7fafc, #f8fafc). Reemplaza a #94a3b8 y #718096, que no llegaban a 4,5:1,
-// y a la atenuación con opacity, cuyo contraste real no se veía leyendo el código.
-$color-text-muted: #5b6778;
+// --- Capas sobre el contenido ---------------------------------------------
+$color-overlay: rgba(15, 23, 42, 0.7);
+$color-overlay-strong: rgba(15, 23, 42, 0.9);
+$color-overlay-light: rgba(255, 255, 255, 0.9);
 
-// Estados periciales. Van siempre con un símbolo además del color (✓ / ✗): verde contra rojo es el
-// par que no distingue una persona con deuteranopía.
-// Íntegro: 5,02:1 sobre blanco y 4,57:1 sobre #dcfce7.
-$color-status-ok: #15803d;
-// Alterado: 6,47:1 sobre blanco y 5,89:1 sobre el fondo de fila marcada #fff1f2.
-$color-status-alert: #b91c1c;
+// Estados periciales (PLAN-25): mantienen sus tokens si ya cumplen AA; los duplicados de aquí se
+// consumen vía los tokens de estado de arriba.
+$color-status-verified: $color-status-ok;
+$color-status-tampered: $color-status-alert;
 
-// Piso tipográfico: nada por debajo de 12 px, y 13 px para lo que se lee de un vistazo (badges y
-// estados).
+// --- Piso tipográfico ------------------------------------------------------
+// Nada por debajo de 12 px, y 13 px para lo que se lee de un vistazo (badges y estados).
 $font-size-min: 0.75rem;
 $font-size-glance: 0.8125rem;
 

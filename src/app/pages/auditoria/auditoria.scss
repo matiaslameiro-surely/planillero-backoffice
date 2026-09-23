@@ -22,7 +22,7 @@
   }
 
   &__back {
-    color: $color-primary;
+    color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
@@ -35,8 +35,8 @@
     border-radius: $radius-sm;
 
     &--error {
-      border: 1px solid $color-error;
-      color: $color-error;
+      border: 1px solid var(--color-error);
+      color: var(--color-error);
     }
   }
 
@@ -48,7 +48,7 @@
   &__verify {
     margin: $spacing-md 0 $spacing-lg;
     padding: $spacing-md;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-md;
 
     &-controls {
@@ -65,13 +65,13 @@
       font-weight: 600;
 
       &--ok {
-        border: 1px solid $color-success;
-        color: $color-success;
+        border: 1px solid var(--color-success);
+        color: var(--color-success);
       }
 
       &--broken {
-        border: 1px solid $color-error;
-        color: $color-error;
+        border: 1px solid var(--color-error);
+        color: var(--color-error);
       }
     }
   }
@@ -92,13 +92,13 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
 
     & input,
     & select {
       padding: 0.4rem 0.5rem;
-      border: 1px solid $color-border;
+      border: 1px solid var(--color-border);
       border-radius: $radius-sm;
       font-size: 0.9rem;
     }
@@ -108,16 +108,16 @@
     padding: 0.5rem 1rem;
     border: none;
     border-radius: $radius-sm;
-    background-color: $color-primary;
-    color: #fff;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
 
     &:disabled {
       // Deshabilitado: gris con texto oscuro (6,15:1) en lugar de opacity, cuyo contraste real no se ve.
-      background-color: #e2e8f0;
-      color: #475569;
+      background-color: var(--color-border);
+      color: var(--color-text-disabled);
       cursor: default;
     }
   }
@@ -125,7 +125,7 @@
   &__hint {
     margin: 0;
     font-size: 0.85rem;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   &__table {
@@ -136,7 +136,7 @@
     th,
     td {
       padding: 0.5rem;
-      border-bottom: 1px solid $color-border;
+      border-bottom: 1px solid var(--color-border);
       text-align: left;
     }
 
@@ -144,45 +144,45 @@
       font-size: $font-size-min;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: $color-text-muted;
+      color: var(--color-text-muted);
     }
   }
 
   &__badge {
     display: inline-block;
     padding: 0.15rem 0.5rem;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: $radius-sm;
-    font-size: 0.75rem;
+    font-size: $font-size-min;
     font-weight: 600;
     white-space: nowrap;
     cursor: help;
 
     &--primary {
-      border-color: $color-primary;
-      color: $color-primary;
+      border-color: var(--color-primary);
+      color: var(--color-primary);
     }
 
     &--success {
-      border-color: $color-success;
-      color: $color-success;
+      border-color: var(--color-success);
+      color: var(--color-success);
     }
 
     &--warning {
-      border-color: $color-warning;
-      color: $color-warning;
+      border-color: var(--color-warning);
+      color: var(--color-warning);
     }
 
     &--info {
-      border-color: $color-info;
-      color: $color-info;
+      border-color: var(--color-info);
+      color: var(--color-info);
     }
   }
 
   &__code {
     margin-left: $spacing-sm;
     font-size: $font-size-min;
-    color: $color-text-muted;
+    color: var(--color-text-muted);
   }
 
   &__pager {
@@ -195,14 +195,14 @@
 
     button {
       padding: 0.4rem 0.9rem;
-      border: 1px solid $color-border;
+      border: 1px solid var(--color-border);
       border-radius: $radius-sm;
       background: transparent;
       font-size: 0.85rem;
       cursor: pointer;
 
       &:disabled {
-        color: $color-text-muted;
+        color: var(--color-text-muted);
         cursor: default;
       }
     }

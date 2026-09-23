@@ -15,11 +15,11 @@
 
   &__text {
     margin: 0 0 1.5rem;
-    color: #4b5563;
+    color: var(--color-text-muted);
   }
 
   &__back {
-    color: #2563eb;
+    color: var(--color-primary);
     text-decoration: none;
 
     &:hover {
