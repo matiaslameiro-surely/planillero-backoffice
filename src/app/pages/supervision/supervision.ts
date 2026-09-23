@@ -34,6 +34,10 @@ export class Supervision implements OnInit, OnDestroy {
   readonly operators = signal<OperatorLiveStatus[]>([]);
   readonly selectedOperatorId = signal<string | null>(null);
   readonly lastUpdated = signal<string>('');
+  readonly lastUpdatedTimestamp = signal<number | null>(null);
+  readonly secondsSinceUpdate = signal<number>(0);
+  readonly secondsUntilNextRefresh = signal<number | null>(null);
+  readonly isStale = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
   /** Frecuencia de polling en segundos (30, 60, o 0 para desactivar). */
@@ -44,7 +48,17 @@ export class Supervision implements OnInit, OnDestroy {
     return this.summary()?.exceptions ?? [];
   });
 
-  private pollingSubscription: Subscription | null = null;
+  /** Tiempo transcurrido formateado en español relativo. */
+  readonly relativeTimeSinceUpdate = computed(() => {
+    if (!this.lastUpdatedTimestamp()) return '';
+    const s = this.secondsSinceUpdate();
+    if (s < 5) return 'hace unos segundos';
+    if (s < 60) return `hace ${s}s`;
+    const m = Math.floor(s / 60);
+    return `hace ${m} min`;
+  });
+
+  private tickerSubscription: Subscription | null = null;
 
   ngOnInit(): void {
     this.refresh();
@@ -60,26 +74,53 @@ export class Supervision implements OnInit, OnDestroy {
    */
   refresh(): void {
     this.loading.set(true);
-    this.error.set(null);
+
+    let summaryDone = false;
+    let operatorsDone = false;
+    let anyError = false;
+
+    const checkFinished = () => {
+      if (summaryDone && operatorsDone) {
+        this.loading.set(false);
+        if (anyError) {
+          this.isStale.set(true);
+        } else {
+          this.isStale.set(false);
+          this.error.set(null);
+          this.updateTimestamp();
+          this.secondsSinceUpdate.set(0);
+          if (this.pollingSeconds() > 0) {
+            this.secondsUntilNextRefresh.set(this.pollingSeconds());
+          }
+        }
+      }
+    };
 
     this.supervisionService.getTableroResumen().subscribe({
       next: (sum) => {
         this.summary.set(sum);
-        this.updateTimestamp();
-        this.loading.set(false);
+        summaryDone = true;
+        checkFinished();
       },
       error: () => {
+        anyError = true;
         this.error.set('No se pudo cargar el resumen del tablero.');
-        this.loading.set(false);
+        summaryDone = true;
+        checkFinished();
       },
     });
 
     this.supervisionService.getOperadoresEstado().subscribe({
       next: (ops) => {
         this.operators.set(ops);
+        operatorsDone = true;
+        checkFinished();
       },
       error: () => {
+        anyError = true;
         this.error.set('No se pudo actualizar el estado de los operadores.');
+        operatorsDone = true;
+        checkFinished();
       },
     });
   }
@@ -98,22 +139,38 @@ export class Supervision implements OnInit, OnDestroy {
 
   private setupPolling(seconds: number): void {
     this.stopPolling();
-    if (seconds > 0) {
-      this.pollingSubscription = interval(seconds * 1000).subscribe(() => {
-        this.refresh();
-      });
-    }
+    this.secondsUntilNextRefresh.set(seconds > 0 ? seconds : null);
+
+    this.tickerSubscription = interval(1000).subscribe(() => {
+      if (this.lastUpdatedTimestamp()) {
+        this.secondsSinceUpdate.set(
+          Math.floor((Date.now() - this.lastUpdatedTimestamp()!) / 1000),
+        );
+      }
+
+      const currentPolling = this.pollingSeconds();
+      if (currentPolling > 0) {
+        const next = (this.secondsUntilNextRefresh() ?? currentPolling) - 1;
+        if (next <= 0) {
+          this.secondsUntilNextRefresh.set(currentPolling);
+          this.refresh();
+        } else {
+          this.secondsUntilNextRefresh.set(next);
+        }
+      }
+    });
   }
 
   private stopPolling(): void {
-    if (this.pollingSubscription) {
-      this.pollingSubscription.unsubscribe();
-      this.pollingSubscription = null;
+    if (this.tickerSubscription) {
+      this.tickerSubscription.unsubscribe();
+      this.tickerSubscription = null;
     }
   }
 
   private updateTimestamp(): void {
     const now = new Date();
+    this.lastUpdatedTimestamp.set(now.getTime());
     this.lastUpdated.set(now.toLocaleTimeString());
   }
 }

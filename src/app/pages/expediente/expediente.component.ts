@@ -29,35 +29,39 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
             </div>
           </header>
 
-          <section class="visit-details">
-            <h2>Detalles de la visita</h2>
-            <dl>
-              <dt>Código</dt><dd>{{ visit.code }}</dd>
-              <dt>Dirección</dt><dd>{{ visit.address }}</dd>
-              <dt>Coordenadas</dt><dd>{{ visit.latitude }}, {{ visit.longitude }}</dd>
-              <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction }}</dd>
-              <dt>Estado</dt><dd>{{ visit.status }}</dd>
-              <dt>Urgencia</dt><dd>{{ visit.urgency }}</dd>
-              <dt>Creada</dt><dd>{{ visit.createdAt | date:'short' }}</dd>
-            </dl>
-          </section>
-
-          @if (formSchema && visit.responses) {
-            <section class="form-section">
-              <h2>Formulario completado</h2>
-              <div class="form-readonly-note">Modo solo lectura - Expediente digital</div>
-              <app-dynamic-form
-                [schema]="formSchema"
-                [initialValues]="visit.responses"
-                mode="readonly"
-              />
-              @if (visit.submittedAt) {
-                <p class="submitted-at">Enviado: {{ visit.submittedAt | date:'short' }}</p>
-              }
+          <div class="expediente-content-grid">
+            <section class="visit-details">
+              <h2>Detalles de la visita</h2>
+              <dl>
+                <dt>Código</dt><dd>{{ visit.code }}</dd>
+                <dt>Dirección</dt><dd>{{ visit.address }}</dd>
+                <dt>Coordenadas</dt><dd>{{ visit.latitude }}, {{ visit.longitude }}</dd>
+                <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction }}</dd>
+                <dt>Estado</dt><dd>{{ visit.status }}</dd>
+                <dt>Urgencia</dt><dd>{{ visit.urgency }}</dd>
+                <dt>Creada</dt><dd>{{ visit.createdAt | date:'short' }}</dd>
+              </dl>
             </section>
-          } @else {
-            <div class="no-form">Esta visita no tiene formulario cargado.</div>
-          }
+
+            <div class="expediente-main-column">
+              @if (formSchema && visit.responses) {
+                <section class="form-section">
+                  <h2>Formulario completado</h2>
+                  <div class="form-readonly-note">Modo solo lectura - Expediente digital</div>
+                  <app-dynamic-form
+                    [schema]="formSchema"
+                    [initialValues]="visit.responses"
+                    mode="readonly"
+                  />
+                  @if (visit.submittedAt) {
+                    <p class="submitted-at">Enviado: {{ visit.submittedAt | date:'short' }}</p>
+                  }
+                </section>
+              } @else {
+                <div class="no-form">Esta visita no tiene formulario cargado.</div>
+              }
+            </div>
+          </div>
         </div>
       }
     </div>
@@ -80,14 +84,19 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
     `.urgency.medium { background: #fef3c7; color: #b45309; }`,
     `.urgency.low { background: #dcfce7; color: #15803d; }`,
     `.expediente-container { display: flex; flex-direction: column; gap: 24px; }`,
+    `.expediente-content-grid { display: flex; flex-direction: column; gap: 24px; }`,
     `section h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }`,
-    `.visit-details dl { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }`,
+    `.visit-details { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }`,
+    `.visit-details dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }`,
     `.visit-details dt { color: #718096; font-weight: 500; }`,
-    `.visit-details dd { margin: 0; color: #1a1a1a; }`,
+    `.visit-details dd { margin: 0; color: #1a1a1a; word-break: break-word; }`,
     `.form-section { background: #f7fafc; border-radius: 12px; padding: 20px; }`,
     `.form-readonly-note { font-size: 13px; color: #718096; margin-bottom: 16px; font-style: italic; }`,
     `.submitted-at { margin-top: 12px; font-size: 13px; color: #718096; }`,
-    `.no-form { text-align: center; padding: 32px; color: #718096; }`,
+    `.no-form { text-align: center; padding: 32px; color: #718096; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1; }`,
+    `@media (min-width: 1024px) { .expediente-content-grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; } .visit-details { position: sticky; top: 20px; } }`,
+    `@media (min-width: 1440px) { .expediente-page { max-width: 90rem; } .expediente-content-grid { grid-template-columns: 400px 1fr; } }`,
+    `@media (min-width: 1920px) { .expediente-page { max-width: 100rem; } .expediente-content-grid { grid-template-columns: 440px 1fr; } }`,
   ]
 })
 export class ExpedienteComponent implements OnInit {

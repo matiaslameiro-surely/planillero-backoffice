@@ -246,4 +246,23 @@ describe('Planificacion', () => {
     expect(items[0].textContent).toContain('V-1001');
     expect(items[0].textContent).toContain('1');
   });
+
+  it('el aviso de asignacion exitosa caduca automaticamente tras un tiempo', () => {
+    vi.useFakeTimers();
+    create();
+
+    fixture.nativeElement.querySelectorAll('.planificacion__link')[0].click();
+    fixture.detectChanges();
+
+    const notice = () =>
+      fixture.nativeElement.querySelector('.planificacion__feedback--ok');
+    expect(notice()).not.toBeNull();
+    expect(notice()?.textContent).toContain('Asignadas 1 visita(s)');
+
+    vi.advanceTimersByTime(6000);
+    fixture.detectChanges();
+
+    expect(notice()).toBeNull();
+    vi.useRealTimers();
+  });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('leaflet', () => {
@@ -155,4 +155,40 @@ describe('Supervision Component', () => {
     component.onPollingChange(0);
     expect(component.pollingSeconds()).toBe(0);
   });
+
+  it('marca datos como obsoletos (isStale) cuando la actualización falla', () => {
+    mockSupervisionService.getTableroResumen.mockReturnValueOnce(
+      throwError(() => new Error('Error de red')),
+    );
+
+    component.refresh();
+    fixture.detectChanges();
+
+    expect(component.isStale()).toBe(true);
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Datos desactualizados');
+  });
+
+  it('muestra "Sin asignar" y no "Cargando..." cuando la jurisdicción es nula tras la carga', () => {
+    component.summary.set({
+      ...mockSummary,
+      jurisdiction: '' as unknown as string,
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Sin asignar');
+    expect(compiled.textContent).not.toContain('Cargando...');
+  });
+
+  it('expone frescura del dato y cuenta regresiva de refresco', () => {
+    expect(component.lastUpdated()).not.toBe('');
+    expect(component.relativeTimeSinceUpdate()).toBe('hace unos segundos');
+    expect(component.secondsUntilNextRefresh()).toBe(30);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Actualizado:');
+    expect(compiled.textContent).toContain('Próximo en 30s');
+  });
 });
+

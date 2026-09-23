@@ -1,6 +1,6 @@
 @use '../../styles/variables' as *;
 
-.evidence-page{width: 100%; max-width: $layout-width-content; margin: 0 auto; padding: 20px; box-sizing: border-box;}
+.evidence-page{width:100%;max-width:$layout-width-content;margin:0 auto;padding:20px;box-sizing:border-box}
 .back-link{color:#2563eb;text-decoration:none;font-weight:600;display:inline-block;margin-bottom:8px}
 .header-content{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .header-content h1{font-size:22px;margin:0}
@@ -18,8 +18,7 @@
 .meta-label{color:#64748b;font-weight:600}
 .meta-hash,.hash-box,.full-hash{word-break:break-all;border-radius:4px;font-family:monospace}
 .meta-hash{background:#f8fafc;padding:4px;border:1px solid #e2e8f0}
-.audit-summary{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.audit-details-table{background:#fff;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden}
+.audit-details-table{background:#fff;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;margin-top:12px}
 .table-header,.table-row{display:grid;grid-template-columns:1fr 2fr 2fr 1fr;padding:6px 10px;font-size:11px;align-items:center}
 .table-header{background:#f8fafc;font-weight:600;border-bottom:1px solid #e2e8f0}
 .table-row{border-bottom:1px solid #f1f5f9}
@@ -47,4 +46,21 @@
 .evidence-metadata-panel ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;font-size:12px}
 .full-hash{background:#f1f5f9;padding:2px 4px;font-size:10px}
 
+/* Veredicto pericial prioritario (PLAN-30: H24) */
+.peritaje-verdict{
+  margin:12px 0;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;
+  .verdict-main{display:flex;align-items:flex-start;gap:10px}
+  .verdict-icon{font-size:20px;line-height:1}
+  .verdict-title{font-size:13px;font-weight:700;margin-bottom:2px}
+  .verdict-desc{font-size:12px;color:#475569;line-height:1.4}
+  &--ok{background:#f0fdf4;border-color:#86efac;.verdict-title{color:#166534}}
+  &--tampered{background:#fef2f2;border-color:#fca5a5;.verdict-title{color:#991b1b}}
+  &--pending{background:#fffbeb;border-color:#fde68a;.verdict-title{color:#92400e}}
+  &--loading{background:#f0f9ff;border-color:#bae6fd;.verdict-title{color:#0369a1}}
+}
 
+.technical-meta-details{
+  margin-top:14px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;
+  summary{font-size:12px;font-weight:600;color:#475569;cursor:pointer;user-select:none;&:hover{color:#0f172a}}
+  .manifest-meta{margin-top:10px}
+}
