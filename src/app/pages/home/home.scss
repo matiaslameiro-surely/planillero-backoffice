@@ -1,40 +1,61 @@
 @use '../../styles/variables' as *;
 
 .home {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
+  width: 100%;
+  max-width: $layout-width-content;
+  margin: 0 auto;
   padding: $spacing-lg;
+  box-sizing: border-box;
   font-family: $font-base;
 
+  &__header {
+    margin-bottom: $spacing-lg;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid $color-border;
+  }
+
   &__title {
-    margin: 0;
-    font-size: 2rem;
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
     font-weight: 700;
+    color: #111827;
   }
 
   &__subtitle {
-    margin: 0 0 $spacing-lg;
-    opacity: 0.6;
+    margin: 0;
+    font-size: 1rem;
+    color: #4b5563;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
   }
 
   &__card {
-    width: 100%;
-    max-width: 26rem;
-    margin-bottom: $spacing-md;
+    display: flex;
+    flex-direction: column;
     padding: $spacing-md;
+    background-color: #ffffff;
     border: 1px solid $color-border;
     border-radius: $radius-md;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  &__card-actions {
+    margin-top: auto;
+    padding-top: $spacing-md;
   }
 
   &__label {
     margin: 0 0 $spacing-sm;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    opacity: 0.6;
+    color: #6b7280;
+    font-weight: 600;
   }
 
   &__value {
@@ -42,8 +63,9 @@
     align-items: center;
     gap: $spacing-sm;
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
+    color: #111827;
   }
 
   &__dot {
@@ -62,57 +84,93 @@
 
   &__hint {
     margin: $spacing-sm 0 0;
-    font-size: 0.85rem;
-    opacity: 0.7;
+    font-size: 0.875rem;
+    color: #4b5563;
   }
 
   &__url {
     margin: $spacing-sm 0 0;
     font-family: monospace;
     font-size: 0.75rem;
-    opacity: 0.5;
+    color: #6b7280;
+    word-break: break-all;
   }
 
-  &__link {
+  &__sections {
     margin-top: $spacing-lg;
-    padding: 0.75rem 1.75rem;
-    border-radius: $radius-sm;
-    background-color: $color-primary;
-    color: #fff;
-    font-size: 1rem;
+  }
+
+  &__section-title {
+    margin: 0 0 $spacing-md;
+    font-size: 1.25rem;
     font-weight: 600;
+    color: #111827;
+  }
+
+  &__links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: $spacing-md;
+  }
+
+  &__nav-card {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-lg;
+    background-color: #ffffff;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
     text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
     &:hover {
-      filter: brightness(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+      border-color: $color-primary;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
     }
   }
 
-  &__actions {
-    display: flex;
-    gap: $spacing-sm;
-    margin-top: $spacing-lg;
+  &__nav-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.35rem;
+  }
+
+  &__nav-desc {
+    font-size: 0.875rem;
+    color: #4b5563;
+    line-height: 1.4;
   }
 
   &__button {
-    padding: 0.75rem 1.75rem;
+    padding: 0.5rem 1rem;
     border: none;
     border-radius: $radius-sm;
     background-color: $color-primary;
     color: #fff;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
+    transition: filter 0.15s ease;
+
+    &:hover {
+      filter: brightness(1.05);
+    }
 
     &:disabled {
       opacity: 0.6;
       cursor: default;
     }
 
-    &--ghost {
-      background-color: transparent;
-      border: 1px solid $color-border;
-      color: $color-primary;
+    &--small {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
     }
   }
 }

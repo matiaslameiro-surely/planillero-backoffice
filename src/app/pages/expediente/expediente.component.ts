@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { DynamicFormComponent } from '../../forms/dynamic-form.component';
@@ -11,7 +11,7 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
 @Component({
   selector: 'app-expediente',
   standalone: true,
-  imports: [CommonModule, DynamicFormComponent],
+  imports: [CommonModule, DynamicFormComponent, RouterLink],
   template: `
     <div class="expediente-page">
       @if (loading) {
@@ -21,6 +21,7 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
       } @else if (visit) {
         <div class="expediente-container">
           <header class="expediente-header">
+            <a routerLink="/planificacion" class="back-link">← Volver a planificación</a>
             <h1>Expediente: {{ visit.code }}</h1>
             <div class="visit-meta">
               <span class="status" [class]="getStatusClass()">{{ visit.status }}</span>
@@ -62,7 +63,9 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
     </div>
   `,
   styles: [
-    `.expediente-page { padding: 24px; max-width: 900px; margin: 0 auto; }`,
+    `.expediente-page { padding: 24px; width: 100%; max-width: 80rem; margin: 0 auto; box-sizing: border-box; }`,
+    `.back-link { color: #2563eb; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 8px; }`,
+    `.back-link:hover { text-decoration: underline; }`,
     `.loading, .error { text-align: center; padding: 48px; font-size: 18px; }`,
     `.error { color: #e53e3e; }`,
     `.expediente-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }`,

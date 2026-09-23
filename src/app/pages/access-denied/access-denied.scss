@@ -1,6 +1,10 @@
+@use '../../styles/variables' as *;
+
 .denied {
-  max-width: 480px;
+  width: 100%;
+  max-width: $layout-width-narrow;
   margin: 4rem auto;
+  box-sizing: border-box;
   padding: 2rem;
   text-align: center;
 

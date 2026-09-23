@@ -1,56 +1,71 @@
 <main class="home">
-  <h1 class="home__title">Planillero</h1>
-  <p class="home__subtitle">Backoffice</p>
+  <header class="home__header">
+    <h1 class="home__title">Panel de Control</h1>
+    <p class="home__subtitle">Bienvenido/a al Backoffice de Planillero</p>
+  </header>
 
   @let u = user();
-  <section class="home__card">
-    <p class="home__label">Sesión</p>
-    <p class="home__value">{{ u?.username }}</p>
-    <p class="home__hint">Roles: {{ u?.roles?.join(', ') }}</p>
-  </section>
+  @let h = health();
 
-  <section class="home__card">
-    <p class="home__label">Conexión con el backend</p>
+  <div class="home__grid">
+    <section class="home__card">
+      <p class="home__label">Sesión activa</p>
+      <p class="home__value">{{ u?.username }}</p>
+      <p class="home__hint">Roles: {{ u?.roles?.join(', ') }}</p>
+    </section>
 
-    @let h = health();
-    @if (h.kind === 'checking') {
-      <p class="home__value">Consultando…</p>
-    } @else if (h.result.status === 'connected') {
-      <p class="home__value">
-        <span class="home__dot home__dot--ok"></span>
-        Conectado
-      </p>
-    } @else {
-      <p class="home__value">
-        <span class="home__dot home__dot--error"></span>
-        Sin conexión
-      </p>
-      <p class="home__hint">{{ h.result.reason }}</p>
-    }
+    <section class="home__card">
+      <p class="home__label">Conexión con el backend</p>
 
-    <p class="home__url">{{ apiUrl }}</p>
-  </section>
+      @if (h.kind === 'checking') {
+        <p class="home__value">Consultando…</p>
+      } @else if (h.result.status === 'connected') {
+        <p class="home__value">
+          <span class="home__dot home__dot--ok"></span>
+          Conectado
+        </p>
+      } @else {
+        <p class="home__value">
+          <span class="home__dot home__dot--error"></span>
+          Sin conexión
+        </p>
+        <p class="home__hint">{{ h.result.reason }}</p>
+      }
 
-  @if (u?.roles?.includes('SUPERVISOR')) {
-    <a class="home__link" routerLink="/planificacion">Planificación de rutas</a>
-    <a class="home__link" routerLink="/supervision">Tablero de supervisión</a>
-  }
+      <p class="home__url">{{ apiUrl }}</p>
 
-  @if (u?.roles?.includes('ADMINISTRATOR')) {
-    <a class="home__link" routerLink="/auditoria">Auditoría</a>
-  }
-
-  <div class="home__actions">
-    <button
-      type="button"
-      class="home__button"
-      (click)="check()"
-      [disabled]="h.kind === 'checking'">
-      Reintentar
-    </button>
-
-    <button type="button" class="home__button home__button--ghost" (click)="signOut()">
-      Cerrar sesión
-    </button>
+      <div class="home__card-actions">
+        <button
+          type="button"
+          class="home__button home__button--small"
+          (click)="check()"
+          [disabled]="h.kind === 'checking'">
+          Reintentar conexión
+        </button>
+      </div>
+    </section>
   </div>
+
+  <section class="home__sections">
+    <h2 class="home__section-title">Secciones operativas</h2>
+    <div class="home__links-grid">
+      @if (u?.roles?.includes('SUPERVISOR')) {
+        <a class="home__nav-card" routerLink="/supervision">
+          <span class="home__nav-title">Tablero de supervisión</span>
+          <span class="home__nav-desc">Monitoreo en vivo de operadores, estado de SLA y mapa operativo en terreno.</span>
+        </a>
+        <a class="home__nav-card" routerLink="/planificacion">
+          <span class="home__nav-title">Planificación de rutas</span>
+          <span class="home__nav-desc">Asignación diaria de visitas, distribución de hojas de ruta y trazabilidad.</span>
+        </a>
+      }
+
+      @if (u?.roles?.includes('ADMINISTRATOR')) {
+        <a class="home__nav-card" routerLink="/auditoria">
+          <span class="home__nav-title">Auditoría</span>
+          <span class="home__nav-desc">Registro inmutable append-only y verificación criptográfica de eventos.</span>
+        </a>
+      }
+    </div>
+  </section>
 </main>

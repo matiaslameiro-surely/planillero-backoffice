@@ -1,12 +1,18 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-/** Raíz de la aplicación. Por ahora sólo monta el router: el layout llega cuando haya más pantallas. */
+import { Navbar } from './core/components/navbar/navbar';
+import { AuthService } from './core/services/auth.service';
+
+/** Raíz de la aplicación con navegación global persistente para sesiones autenticadas. */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Navbar],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  private readonly auth = inject(AuthService);
+  protected readonly user = this.auth.user;
+}
