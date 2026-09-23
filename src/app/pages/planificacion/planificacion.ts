@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type {
@@ -61,7 +68,7 @@ const URGENCIAS: { value: VisitUrgency | ''; label: string }[] = [
   styleUrl: './planificacion.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Planificacion {
+export class Planificacion implements OnDestroy {
   private readonly planificacion = inject(PlanificacionService);
 
   protected readonly operators = signal<Operator[]>([]);
@@ -78,6 +85,28 @@ export class Planificacion {
   protected readonly assigning = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
+
+  private noticeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnDestroy(): void {
+    this.clearNoticeTimeout();
+  }
+
+  protected setNotice(message: string, durationMs = 6000): void {
+    this.clearNoticeTimeout();
+    this.notice.set(message);
+    this.noticeTimeoutId = setTimeout(() => {
+      this.notice.set(null);
+      this.noticeTimeoutId = null;
+    }, durationMs);
+  }
+
+  private clearNoticeTimeout(): void {
+    if (this.noticeTimeoutId !== null) {
+      clearTimeout(this.noticeTimeoutId);
+      this.noticeTimeoutId = null;
+    }
+  }
 
   protected readonly estados = ESTADOS;
   protected readonly urgencias = URGENCIAS;
@@ -165,6 +194,7 @@ export class Planificacion {
     }
 
     this.error.set(null);
+    this.clearNoticeTimeout();
     this.notice.set(null);
     this.assigning.set(true);
     this.planificacion
@@ -173,7 +203,7 @@ export class Planificacion {
         next: (sheet) => {
           this.assigning.set(false);
           this.selected.set(new Set());
-          this.notice.set(
+          this.setNotice(
             `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
           );
           if (sheet.operatorId === this.selectedOperatorId()) {

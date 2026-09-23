@@ -1,11 +1,21 @@
-<div class="supervision-container">
+<div class="supervision-container" [class.supervision-container--stale]="isStale()">
   <!-- Header con controles de refresco y polling -->
   <header class="supervision-header">
     <div class="supervision-header__title">
       <h1>Tablero Central de Supervisión</h1>
       <p class="supervision-header__subtitle">
-        Jurisdicción: <strong>{{ summary()?.jurisdiction ?? 'Cargando...' }}</strong> &bull;
-        Fecha operativa: <strong>{{ summary()?.date ?? '' }}</strong>
+        Jurisdicción:
+        @if (loading() && !summary()) {
+          <span class="loading-inline">Cargando...</span>
+        } @else {
+          <strong>{{ summary()?.jurisdiction || 'Sin asignar' }}</strong>
+        }
+        &bull; Fecha operativa:
+        @if (loading() && !summary()) {
+          <span class="loading-inline">Cargando...</span>
+        } @else {
+          <strong>{{ summary()?.date || '—' }}</strong>
+        }
       </p>
     </div>
 
@@ -38,11 +48,27 @@
         }
       </button>
 
-      @if (lastUpdated()) {
-        <span class="last-updated">Actualizado: {{ lastUpdated() }}</span>
-      }
+      <div class="freshness-info">
+        @if (lastUpdated()) {
+          <span class="last-updated">
+            Actualizado: {{ lastUpdated() }}
+            @if (relativeTimeSinceUpdate()) {
+              <span class="relative-time">({{ relativeTimeSinceUpdate() }})</span>
+            }
+          </span>
+        }
+        @if (pollingSeconds() > 0 && secondsUntilNextRefresh() !== null) {
+          <span class="refresh-countdown">Próximo en {{ secondsUntilNextRefresh() }}s</span>
+        }
+      </div>
     </div>
   </header>
+
+  @if (isStale()) {
+    <div class="alert alert--stale" role="alert">
+      <strong>⚠️ Datos desactualizados:</strong> La última sincronización no pudo completarse. Los datos en pantalla reflejan el estado registrado a las {{ lastUpdated() }}.
+    </div>
+  }
 
   @if (error()) {
     <div class="alert alert--error" role="alert">
@@ -50,42 +76,43 @@
     </div>
   }
 
-  <!-- Fila de Tarjetas de KPIs métricos -->
+  <!-- Fila de Tarjetas de KPIs métricos con jerarquía para excepciones -->
   <section class="kpi-grid" aria-label="Indicadores clave de desempeño operativo">
-    <div class="kpi-card">
-      <div class="kpi-card__label">Operadores Asignados</div>
-      <div class="kpi-card__value">{{ summary()?.totalOperators ?? 0 }}</div>
-      <div class="kpi-card__sub">{{ summary()?.totalVisits ?? 0 }} visitas totales</div>
-    </div>
-
-    <div class="kpi-card kpi-card--en-campo">
-      <div class="kpi-card__label">En Campo / En Ruta</div>
-      <div class="kpi-card__value">{{ summary()?.inFieldOperators ?? 0 }}</div>
-      <div class="kpi-card__sub">Transmitiendo dentro de SLA</div>
-    </div>
-
-    <div class="kpi-card kpi-card--demorado">
+    <div class="kpi-card kpi-card--demorado kpi-card--actionable">
+      <div class="kpi-card__priority-tag">Atención requerida</div>
       <div class="kpi-card__label">Fuera de SLA / Demorados</div>
       <div class="kpi-card__value">{{ summary()?.delayedOperators ?? 0 }}</div>
       <div class="kpi-card__sub">Atención inmediata requerida</div>
     </div>
 
-    <div class="kpi-card kpi-card--offline">
+    <div class="kpi-card kpi-card--offline kpi-card--actionable">
       <div class="kpi-card__label">Desconectados / Offline</div>
       <div class="kpi-card__value">{{ summary()?.offlineOperators ?? 0 }}</div>
       <div class="kpi-card__sub">> 10 min sin latido</div>
-    </div>
-
-    <div class="kpi-card kpi-card--completo">
-      <div class="kpi-card__label">Turnos Completados</div>
-      <div class="kpi-card__value">{{ summary()?.completedShiftOperators ?? 0 }}</div>
-      <div class="kpi-card__sub">{{ summary()?.completedVisits ?? 0 }} visitas cerradas</div>
     </div>
 
     <div class="kpi-card kpi-card--sla">
       <div class="kpi-card__label">Cumplimiento de SLA</div>
       <div class="kpi-card__value">{{ summary()?.slaComplianceRate ?? 100 }}%</div>
       <div class="kpi-card__sub">Índice de puntualidad operativa</div>
+    </div>
+
+    <div class="kpi-card kpi-card--context">
+      <div class="kpi-card__label">Operadores Asignados</div>
+      <div class="kpi-card__value">{{ summary()?.totalOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">{{ summary()?.totalVisits ?? 0 }} visitas totales</div>
+    </div>
+
+    <div class="kpi-card kpi-card--en-campo kpi-card--context">
+      <div class="kpi-card__label">En Campo / En Ruta</div>
+      <div class="kpi-card__value">{{ summary()?.inFieldOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">Transmitiendo dentro de SLA</div>
+    </div>
+
+    <div class="kpi-card kpi-card--completo kpi-card--context">
+      <div class="kpi-card__label">Turnos Completados</div>
+      <div class="kpi-card__value">{{ summary()?.completedShiftOperators ?? 0 }}</div>
+      <div class="kpi-card__sub">{{ summary()?.completedVisits ?? 0 }} visitas cerradas</div>
     </div>
   </section>
 
