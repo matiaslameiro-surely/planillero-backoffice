@@ -130,6 +130,25 @@ describe('Supervision Component', () => {
     expect(compiled.textContent).toContain('50%');
   });
 
+  it('renderiza la tarjeta de demorados con cabecera flex y subtítulo informativo no redundante', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const demoradoCard = compiled.querySelector('.kpi-card--demorado');
+    expect(demoradoCard).toBeTruthy();
+
+    const header = demoradoCard?.querySelector('.kpi-card__header');
+    expect(header).toBeTruthy();
+
+    const label = header?.querySelector('.kpi-card__label');
+    expect(label?.textContent?.trim()).toBe('Fuera de SLA / Demorados');
+
+    const priorityTag = header?.querySelector('.kpi-card__priority-tag');
+    expect(priorityTag?.textContent?.trim()).toBe('Atención requerida');
+
+    const sub = demoradoCard?.querySelector('.kpi-card__sub');
+    expect(sub?.textContent?.trim()).toBe('Tiempo de visita excedido');
+    expect(sub?.textContent).not.toContain('Atención inmediata requerida');
+  });
+
   it('despliega panel de excepciones destacadas ante operadores fuera de SLA', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Monitoreo de Excepciones');

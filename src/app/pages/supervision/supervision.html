@@ -79,10 +79,12 @@
   <!-- Fila de Tarjetas de KPIs métricos con jerarquía para excepciones -->
   <section class="kpi-grid" aria-label="Indicadores clave de desempeño operativo">
     <div class="kpi-card kpi-card--demorado kpi-card--actionable">
-      <div class="kpi-card__priority-tag">Atención requerida</div>
-      <div class="kpi-card__label">Fuera de SLA / Demorados</div>
+      <div class="kpi-card__header">
+        <div class="kpi-card__label">Fuera de SLA / Demorados</div>
+        <div class="kpi-card__priority-tag">Atención requerida</div>
+      </div>
       <div class="kpi-card__value">{{ summary()?.delayedOperators ?? 0 }}</div>
-      <div class="kpi-card__sub">Atención inmediata requerida</div>
+      <div class="kpi-card__sub">Tiempo de visita excedido</div>
     </div>
 
     <div class="kpi-card kpi-card--offline kpi-card--actionable">
