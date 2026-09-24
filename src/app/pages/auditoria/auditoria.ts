@@ -145,6 +145,11 @@ export class Auditoria {
 
   /** Copia el UUID completo de la entidad, que en la grilla sólo se ve abreviado o en el tooltip. */
   protected copyEntityId(entityId: string): void {
+    // Fuera de un contexto seguro (http que no sea localhost) el navegador no expone el portapapeles.
+    if (!navigator.clipboard) {
+      this.error.set('El navegador no permite copiar desde esta página. El ID completo está en el tooltip.');
+      return;
+    }
     navigator.clipboard.writeText(entityId).then(
       () => this.copiedId.set(entityId),
       () => this.error.set('No se pudo copiar el ID al portapapeles.'),
