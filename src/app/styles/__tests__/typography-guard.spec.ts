@@ -33,7 +33,13 @@ const MIN_PT = 9;
 const MIN_PERCENT = 75;
 
 /**
- * Analiza una línea o fragmento CSS para detectar si font-size viola el piso tipográfico.
+ * Analiza un valor o fragmento CSS para detectar si font-size viola el piso tipográfico.
+ *
+ * Límites conocidos:
+ * - No evalúa expresiones dinámicas complejas `calc(...)`.
+ * - No desglosa el atajo taquigráfico `font: <size>/<line-height> <family>`.
+ * - Escanea el archivo `.ts` completo; si se usa `opacity` en un objeto JavaScript (ej. Leaflet),
+ *   se debe documentar con `// allow-opacity: <motivo>`.
  */
 export function validateFontSize(val: string): { valid: boolean; reason?: string } {
   const trimmed = val.trim().replace(/;$/, '').replace(/!important$/, '').trim();
@@ -125,15 +131,10 @@ export function auditStyleContent(content: string, filePath: string): StyleViola
       continue;
     }
 
-    // Ignorar definición de variables SCSS (ej: $font-size-min: 0.75rem;)
-    if (trimmedLine.startsWith('$') && trimmedLine.includes(':')) {
-      continue;
-    }
-
-    // 1. Validar font-size
-    const fontSizeRegex = /font-size\s*:\s*([^;!}\n]+)/gi;
+    // 1. Validar propiedades font-size estándar
+    const fontSizePropRegex = /(?:^|[^\w$-])font-size\s*:\s*([^;!}\n]+)/gi;
     let match: RegExpExecArray | null;
-    while ((match = fontSizeRegex.exec(line)) !== null) {
+    while ((match = fontSizePropRegex.exec(line)) !== null) {
       const rawVal = match[1];
       const check = validateFontSize(rawVal);
       if (!check.valid) {
@@ -147,15 +148,32 @@ export function auditStyleContent(content: string, filePath: string): StyleViola
       }
     }
 
-    // 2. Validar opacity
-    const opacityRegex = /opacity\s*:\s*([^;!}\n]+)/gi;
+    // 2. Validar definiciones de tokens SCSS ($font-size-*: ...) y CSS custom properties (--font-size-*: ...)
+    const tokenDefRegex = /(?:^|[^\w])(\$font-size[-\w]*|--font-size[-\w]*)\s*:\s*([^;!}\n]+)/gi;
+    while ((match = tokenDefRegex.exec(line)) !== null) {
+      const tokenName = match[1].trim();
+      const rawVal = match[2];
+      const check = validateFontSize(rawVal);
+      if (!check.valid) {
+        violations.push({
+          file: filePath,
+          line: lineNum,
+          type: 'font-size',
+          found: `${tokenName}: ${rawVal.trim()}`,
+          message: `[${filePath}:${lineNum}] Definición de token '${tokenName}: ${rawVal.trim()}' viola el piso tipográfico: ${check.reason}. El mínimo permitido es $font-size-min (12px / 0.75rem).`,
+        });
+      }
+    }
+
+    // 3. Validar opacity
+    const opacityRegex = /(?:^|[^\w$-])opacity\s*:\s*([^;!}\n]+)/gi;
     while ((match = opacityRegex.exec(line)) !== null) {
       const rawVal = match[1].trim();
 
-      // Verificar si hay excepción en la misma línea o en la línea inmediatamente anterior
-      const hasInlineException = /allow-opacity|ignore-opacity/i.test(line);
+      // Verificar si hay excepción canónica 'allow-opacity' en la misma línea o en la inmediatamente anterior
+      const hasInlineException = /allow-opacity/i.test(line);
       const prevLine = i > 0 ? lines[i - 1] : '';
-      const hasPrevLineException = /allow-opacity|ignore-opacity/i.test(prevLine);
+      const hasPrevLineException = /allow-opacity/i.test(prevLine);
 
       if (!hasInlineException && !hasPrevLineException) {
         violations.push({
@@ -254,7 +272,41 @@ describe('Guardia de Piso Tipográfico y Opacity (PLAN-40)', () => {
       expect(violations[0].found).toBe('70%');
     });
 
-    it('admite font-size válidos ($font-size-min, 12px, 0.75rem, etc.)', () => {
+    it('detecta definiciones de variables SCSS ($font-size-*) por debajo del piso', () => {
+      const sample = `
+        $font-size-tiny: 0.6rem;
+        $font-size-sub: 10px;
+      `;
+      const violations = auditStyleContent(sample, '_variables.scss');
+      expect(violations.length).toBe(2);
+      expect(violations[0].found).toBe('$font-size-tiny: 0.6rem');
+      expect(violations[1].found).toBe('$font-size-sub: 10px');
+    });
+
+    it('detecta definiciones de custom properties (--font-size-*) por debajo del piso', () => {
+      const sample = `
+        :root {
+          --font-size-small: 0.6rem;
+          --font-size-badge: 11px;
+        }
+      `;
+      const violations = auditStyleContent(sample, 'styles.scss');
+      expect(violations.length).toBe(2);
+      expect(violations[0].found).toBe('--font-size-small: 0.6rem');
+      expect(violations[1].found).toBe('--font-size-badge: 11px');
+    });
+
+    it('admite definiciones de tokens válidos ($font-size-min, $font-size-glance, --font-size-base)', () => {
+      const sample = `
+        $font-size-min: 0.75rem;
+        $font-size-glance: 0.8125rem;
+        --font-size-base: 1rem;
+      `;
+      const violations = auditStyleContent(sample, 'tokens.scss');
+      expect(violations.length).toBe(0);
+    });
+
+    it('admite font-size válidos ($font-size-min, 12px, 0.75rem, var(...), etc.)', () => {
       const sample = `
         .ok1 { font-size: $font-size-min; }
         .ok2 { font-size: $font-size-glance; }
@@ -263,6 +315,7 @@ describe('Guardia de Piso Tipográfico y Opacity (PLAN-40)', () => {
         .ok5 { font-size: 0.75rem; }
         .ok6 { font-size: 1rem; }
         .ok7 { font-size: inherit; }
+        .ok8 { font-size: var(--font-size-base); }
       `;
       const violations = auditStyleContent(sample, 'sample.scss');
       expect(violations.length).toBe(0);
