@@ -101,7 +101,9 @@
                   @if (isSelectable(visit)) {
                     <input
                       type="checkbox"
-                      [checked]="selected().has(visit.id)"
+                      [checked]="selected().has(visit.id) && !isInCurrentSheet(visit)"
+                      [disabled]="isInCurrentSheet(visit)"
+                      [title]="isInCurrentSheet(visit) ? alreadyInSheetTitle : ''"
                       (change)="toggle(visit.id, $any($event.target).checked)"
                       [attr.aria-label]="'Seleccionar ' + visit.code" />
                   }
@@ -124,7 +126,10 @@
                   </a>
                 </td>
                 <td>
-                  @if (isSelectable(visit)) {
+                  @if (isInCurrentSheet(visit)) {
+                    <!-- Volver a asignarla al mismo operador y fecha daba un 400 del backend. -->
+                    <span class="planificacion__hint" [title]="alreadyInSheetTitle">Ya en su hoja</span>
+                  } @else if (isSelectable(visit)) {
                     <button
                       type="button"
                       class="planificacion__link"
