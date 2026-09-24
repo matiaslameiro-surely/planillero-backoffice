@@ -178,7 +178,29 @@ export class Planificacion implements OnDestroy {
   protected readonly routeVisits = computed<Visit[]>(
     () => this.routeSheet()?.items.map((i) => i.visit) ?? [],
   );
-  protected readonly selectedCount = computed(() => this.selected().size);
+  /**
+   * IDs de las visitas que el operador elegido ya tiene en su hoja de ruta de la fecha elegida.
+   *
+   * Sólo cuenta la hoja que coincide con la cabecera: mientras carga la de otro operador u otra fecha,
+   * la anterior no deshabilita nada. Asignar una visita que ya está en la hoja daba un 400 del backend.
+   */
+  private readonly currentSheetIds = computed<ReadonlySet<string>>(() => {
+    const sheet = this.routeSheet();
+    if (!sheet || sheet.operatorId !== this.selectedOperatorId() || sheet.date !== this.selectedDate()) {
+      return new Set();
+    }
+    return new Set(sheet.items.map((item) => item.visit.id));
+  });
+
+  /**
+   * Lo marcado que se puede asignar: excluye lo que ya está en la hoja vigente. No se borra de
+   * `selected`, así que si se cambia de operador vuelve a contar sin tener que marcarlo de nuevo.
+   */
+  private readonly assignableSelection = computed(() =>
+    [...this.selected()].filter((id) => !this.currentSheetIds().has(id)),
+  );
+
+  protected readonly selectedCount = computed(() => this.assignableSelection().length);
 
   /** El acuse de la asignación, que recibe el foco cuando la operación termina bien. */
   private readonly noticeBox = viewChild<ElementRef<HTMLElement>>('noticeBox');
@@ -223,6 +245,13 @@ export class Planificacion implements OnDestroy {
     this.reloadVisits();
   }
 
+  protected readonly alreadyInSheetTitle = 'Ya está en la hoja de ruta de este operador para esta fecha.';
+
+  /** La visita ya está en la hoja de ruta del operador y la fecha elegidos. */
+  protected isInCurrentSheet(visit: Visit): boolean {
+    return this.currentSheetIds().has(visit.id);
+  }
+
   protected isSelectable(visit: Visit): boolean {
     return visit.status !== 'COMPLETED' && visit.status !== 'CANCELLED';
   }
@@ -252,7 +281,7 @@ export class Planificacion implements OnDestroy {
   }
 
   protected assignSelected(): void {
-    this.requestAssignment([...this.selected()]);
+    this.requestAssignment(this.assignableSelection());
   }
 
   /** Acción rápida: propone asignar una sola visita al operador y fecha de la cabecera. */

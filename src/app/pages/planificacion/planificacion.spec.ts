@@ -84,6 +84,12 @@ describe('Planificacion', () => {
     items: [{ position: 1, visit: pendiente }],
   };
 
+  /**
+   * Hoja del día sin visitas. Es la respuesta por defecto: con `hoja`, V-1001 ya estaría asignada al
+   * operador y la pantalla no ofrecería asignarla (PLAN-42).
+   */
+  const hojaVacia: RouteSheet = { ...hoja, items: [] };
+
   let fixture: ComponentFixture<Planificacion>;
   let service: PlanificacionService;
 
@@ -91,7 +97,7 @@ describe('Planificacion', () => {
     service = {
       getOperators: vi.fn(() => of([operator])),
       getVisits: vi.fn(() => of([pendiente])),
-      getRouteSheet: vi.fn(() => of(hoja)),
+      getRouteSheet: vi.fn(() => of(hojaVacia)),
       assign: vi.fn(() => of(hoja)),
     } as unknown as PlanificacionService;
 
@@ -428,6 +434,7 @@ describe('Planificacion', () => {
   });
 
   it('muestra la hoja de ruta del operador con su orden', () => {
+    vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
     create();
     elegirOperador();
 
@@ -462,5 +469,61 @@ describe('Planificacion', () => {
 
     expect(notice()).toBeNull();
     vi.useRealTimers();
+  });
+
+  describe('visitas que el operador ya tiene en su hoja de esa fecha (PLAN-42)', () => {
+    function actionCell(): HTMLElement {
+      return fixture.nativeElement.querySelector('.planificacion__table tbody tr td:last-child');
+    }
+
+    it('no ofrece «Asignar» ni deja marcarla, y dice por qué', () => {
+      vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
+      create();
+      elegirOperador();
+
+      expect(actionCell().querySelector('button')).toBeNull();
+      expect(actionCell().textContent).toContain('Ya en su hoja');
+      expect(actionCell().querySelector('span')!.title).toContain('Ya está en la hoja de ruta');
+      expect(firstCheckbox()!.disabled).toBe(true);
+      expect(firstCheckbox()!.title).toContain('Ya está en la hoja de ruta');
+    });
+
+    it('lo marcado antes de elegir el operador no cuenta ni se manda si ya está en su hoja', () => {
+      vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
+      create();
+      firstCheckbox()!.click();
+      fixture.detectChanges();
+
+      elegirOperador();
+
+      expect(bulkButton().textContent).toContain('(0)');
+      expect(bulkButton().disabled).toBe(true);
+      expect(vi.mocked(service.assign)).not.toHaveBeenCalled();
+    });
+
+    it('con otro operador que no la tiene, «Asignar» vuelve a estar disponible', () => {
+      const otro: Operator = { id: 'op-2', username: 'beto', jurisdiction: 'ZONA_NORTE' };
+      vi.mocked(service.getOperators).mockReturnValue(of([operator, otro]));
+      vi.mocked(service.getRouteSheet).mockImplementation((operatorId: string) =>
+        of(operatorId === operator.id ? hoja : { ...hojaVacia, operatorId: otro.id, operatorUsername: otro.username }),
+      );
+      create();
+
+      elegirOperador(operator.id);
+      expect(actionCell().querySelector('button')).toBeNull();
+
+      elegirOperador(otro.id);
+      expect(actionCell().querySelector('button')?.textContent).toContain('Asignar');
+      expect(firstCheckbox()!.disabled).toBe(false);
+    });
+
+    it('una hoja de otra fecha no deshabilita nada mientras carga la vigente', () => {
+      vi.mocked(service.getRouteSheet).mockReturnValue(of({ ...hoja, date: '2000-01-01' }));
+      create();
+      elegirOperador();
+
+      expect(actionCell().querySelector('button')?.textContent).toContain('Asignar');
+      expect(firstCheckbox()!.disabled).toBe(false);
+    });
   });
 });
