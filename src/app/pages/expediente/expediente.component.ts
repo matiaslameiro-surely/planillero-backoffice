@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
@@ -15,11 +15,11 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
   imports: [CommonModule, DynamicFormComponent, RouterLink, LabelPipe, AppDatePipe],
   template: `
     <div class="expediente-page">
-      @if (loading) {
+      @if (loading()) {
         <div class="loading">Cargando expediente...</div>
-      } @else if (error) {
-        <div class="error">{{ error }}</div>
-      } @else if (visit) {
+      } @else if (error(); as message) {
+        <div class="error">{{ message }}</div>
+      } @else if (visit(); as visit) {
         <div class="expediente-container">
           <header class="expediente-header">
             <a routerLink="/planificacion" class="back-link">← Volver a planificación</a>
@@ -45,7 +45,8 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
             </section>
 
             <div class="expediente-main-column">
-              @if (formSchema && visit.responses) {
+              @if (formSchema(); as formSchema) {
+                @if (visit.responses) {
                 <section class="form-section">
                   <h2>Formulario completado</h2>
                   <div class="form-readonly-note">Modo solo lectura - Expediente digital</div>
@@ -58,6 +59,9 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
                     <p class="submitted-at">Enviado: {{ visit.submittedAt | appDate }}</p>
                   }
                 </section>
+                } @else {
+                  <div class="no-form">Esta visita no tiene formulario cargado.</div>
+                }
               } @else {
                 <div class="no-form">Esta visita no tiene formulario cargado.</div>
               }
@@ -107,20 +111,22 @@ export class ExpedienteComponent implements OnInit {
   private visitsApi = inject(VisitsApiService);
   private validationService = inject(ValidationService);
 
-  protected visit: VisitWithForm | null = null;
-  protected formSchema: JsonSchema | null = null;
-  protected loading = true;
-  protected error: string | null = null;
+  // Signals y no propiedades comunes: la app es zoneless, y un cambio después de un `await` no
+  // redibuja la vista si no pasa por un signal (PLAN-41: el expediente quedaba en «Cargando...»).
+  protected readonly visit = signal<VisitWithForm | null>(null);
+  protected readonly formSchema = signal<JsonSchema | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
 
   protected getStatusClass(): string {
-    return this.visit?.status?.toLowerCase() ?? '';
+    return this.visit()?.status?.toLowerCase() ?? '';
   }
 
   ngOnInit(): void {
     const visitId = this.route.snapshot.paramMap.get('visitId');
     if (!visitId) {
-      this.error = 'ID de visita no proporcionado';
-      this.loading = false;
+      this.error.set('ID de visita no proporcionado');
+      this.loading.set(false);
       return;
     }
     this.loadExpediente(visitId);
@@ -128,20 +134,21 @@ export class ExpedienteComponent implements OnInit {
 
   private async loadExpediente(visitId: string): Promise<void> {
     try {
-      this.loading = true;
-      this.visit = await firstValueFrom(this.visitsApi.getVisitWithForm(visitId));
+      this.loading.set(true);
+      const visit = await firstValueFrom(this.visitsApi.getVisitWithForm(visitId));
 
-      if (this.visit.templateKey) {
+      if (visit.templateKey) {
         const template = await firstValueFrom(
-          this.formsApi.getTemplate(this.visit.templateKey, this.visit.templateVersion),
+          this.formsApi.getTemplate(visit.templateKey, visit.templateVersion),
         );
-        this.formSchema = template.schema;
+        this.formSchema.set(template.schema);
       }
 
-      this.loading = false;
+      this.visit.set(visit);
+      this.loading.set(false);
     } catch (e) {
-      this.error = 'No se pudo cargar el expediente';
-      this.loading = false;
+      this.error.set('No se pudo cargar el expediente');
+      this.loading.set(false);
       console.error(e);
     }
   }
