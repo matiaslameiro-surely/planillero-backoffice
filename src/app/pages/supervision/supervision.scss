@@ -67,6 +67,13 @@
   background: var(--color-surface); padding: 6px 10px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-border-strong);
   border-radius: 4px; position: relative;
 
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
   &__label { font-size: $font-size-min; font-weight: 600; text-transform: uppercase; color: var(--color-text-muted); }
   &__value { font-size: 1.2rem; font-weight: 700; margin: 1px 0; }
   &__sub { font-size: $font-size-min; color: var(--color-text-muted); }
@@ -76,7 +83,7 @@
     .kpi-card__value { font-size: 1.45rem; font-weight: 800; }
   }
   &__priority-tag {
-    position: absolute; top: 4px; right: 6px; font-size: $font-size-glance; font-weight: 700;
+    font-size: $font-size-glance; font-weight: 700;
     text-transform: uppercase; background: var(--color-status-alert-bg); color: var(--color-status-alert); padding: 1px 4px;
     border-radius: 2px; border: 1px solid var(--color-status-alert-border);
   }
