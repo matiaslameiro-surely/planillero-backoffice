@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +20,7 @@ describe('Auditoria', () => {
     eventType: 'VISIT_STARTED',
     entityType: 'VISIT',
     entityId: 'a0000001-0000-4000-8000-000000000001',
+    entityCode: null,
     username: 'operador.demo',
     ip: '127.0.0.1',
     deviceId: null,
@@ -201,7 +203,7 @@ describe('Auditoria', () => {
     create();
 
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
-      'input[aria-label="ID de visita a auditar"]',
+      'input[aria-label="ID o código de visita a auditar"]',
     );
     input.value = 'a0000001-0000-4000-8000-000000000001';
     input.dispatchEvent(new Event('input'));
@@ -213,6 +215,87 @@ describe('Auditoria', () => {
     const result = fixture.nativeElement.querySelector('.auditoria__verify-result--broken');
     expect(result.textContent).toContain('log-9');
     expect(result.textContent).toContain('El hash no coincide.');
+  });
+
+  // --- PLAN-46 ---
+
+  it('identifica la visita por su código y ofrece copiar el UUID completo', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    vi.mocked(service.getLogs).mockReturnValue(
+      of({ ...page, content: [{ ...entry, entityCode: 'V-1001' }] }),
+    );
+    create();
+
+    const cell: HTMLTableCellElement = fixture.nativeElement.querySelectorAll('tbody td')[2];
+    const code: HTMLElement = cell.querySelector('code')!;
+    expect(cell.textContent).toContain('Visita');
+    expect(code.textContent).toBe('V-1001');
+    expect(code.title).toBe(entry.entityId);
+
+    (cell.querySelector('.auditoria__copy') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(writeText).toHaveBeenCalledWith(entry.entityId);
+    expect((cell.querySelector('.auditoria__copy') as HTMLButtonElement).title).toBe('ID copiado');
+  });
+
+  function verifyWith(value: string): void {
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      'input[aria-label="ID o código de visita a auditar"]',
+    );
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    fixture.nativeElement.querySelector('.auditoria__primary').click();
+    fixture.detectChanges();
+  }
+
+  it('audita una visita por su código', () => {
+    create();
+
+    verifyWith('V-1001');
+
+    expect(vi.mocked(service.verify)).toHaveBeenCalledWith('V-1001');
+    expect(fixture.nativeElement.querySelector('.auditoria__verify-result--ok')).not.toBeNull();
+  });
+
+  it('no llama al backend si el valor no es un ID ni un código de visita', () => {
+    create();
+
+    verifyWith('66');
+
+    expect(vi.mocked(service.verify)).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.auditoria__verify [role="alert"]').textContent).toContain(
+      'Ingresá un ID o un código de visita válido',
+    );
+  });
+
+  it('muestra el mensaje del backend cuando la visita no existe', () => {
+    vi.mocked(service.verify).mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 404,
+            error: { error: 'visit_not_found', message: 'No existe una visita con ese ID o código.' },
+          }),
+      ),
+    );
+    create();
+
+    verifyWith('V-9999');
+
+    expect(fixture.nativeElement.querySelector('.auditoria__verify [role="alert"]').textContent).toContain(
+      'No existe una visita con ese ID o código.',
+    );
+  });
+
+  it('el filtro de usuario tiene un placeholder descriptivo, no un usuario', () => {
+    create();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[aria-label="Usuario"]');
+    expect(input.placeholder).toBe('Filtrar por usuario');
+    expect(input.value).toBe('');
   });
 
   it('muestra un error si la carga de eventos falla', () => {

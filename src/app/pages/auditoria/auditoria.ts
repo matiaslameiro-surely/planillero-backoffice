@@ -25,6 +25,10 @@ function messageOf(error: unknown): string {
 
 const PAGE_SIZE = 20;
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Código de visita genérico (`<letras>-<números>`), para no atarse a la letra `V`. */
+const VISIT_CODE_PATTERN = /^[a-z]+-\d+$/i;
+
 /** Inicio del día local elegido (`yyyy-MM-dd`), como instante ISO para el parámetro `from`. */
 function startOfDay(date: string): string | undefined {
   const [year, month, day] = date.split('-').map(Number);
@@ -73,6 +77,10 @@ export class Auditoria {
   protected readonly verifyVisitId = signal('');
   protected readonly verifying = signal(false);
   protected readonly verificationResult = signal<ChainVerificationResult | null>(null);
+  protected readonly verifyError = signal<string | null>(null);
+
+  /** ID de la última entidad copiada, para mostrar la confirmación en su fila. */
+  protected readonly copiedId = signal<string | null>(null);
 
   constructor() {
     this.reload();
@@ -135,12 +143,27 @@ export class Auditoria {
     this.verifyVisitId.set((event.target as HTMLInputElement).value);
   }
 
-  /** "Auditar Integridad de Visita": con el campo vacío verifica la cadena completa. */
+  /** Copia el UUID completo de la entidad, que en la grilla sólo se ve abreviado o en el tooltip. */
+  protected copyEntityId(entityId: string): void {
+    navigator.clipboard.writeText(entityId).then(
+      () => this.copiedId.set(entityId),
+      () => this.error.set('No se pudo copiar el ID al portapapeles.'),
+    );
+  }
+
+  /**
+   * "Auditar Integridad de Visita": con el campo vacío verifica la cadena completa. Acepta el UUID o el
+   * código de la visita; si el valor no tiene forma de ninguno, avisa sin llamar al backend.
+   */
   protected verifyIntegrity(): void {
-    this.verifying.set(true);
     this.verificationResult.set(null);
-    this.error.set(null);
+    this.verifyError.set(null);
     const visitId = this.verifyVisitId().trim() || undefined;
+    if (visitId && !UUID_PATTERN.test(visitId) && !VISIT_CODE_PATTERN.test(visitId)) {
+      this.verifyError.set('Ingresá un ID o un código de visita válido.');
+      return;
+    }
+    this.verifying.set(true);
     this.audit.verify(visitId).subscribe({
       next: (result) => {
         this.verifying.set(false);
@@ -148,7 +171,7 @@ export class Auditoria {
       },
       error: (error: unknown) => {
         this.verifying.set(false);
-        this.error.set(messageOf(error));
+        this.verifyError.set(messageOf(error));
       },
     });
   }
