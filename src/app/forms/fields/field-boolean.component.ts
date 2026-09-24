@@ -46,7 +46,7 @@ import { CommonModule } from '@angular/common';
     .required { color: var(--color-error); }
     .field-description { font-size: 12px; color: var(--color-text-muted); margin: 2px 0 0; }
     .switch-label { position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer; }
-    .switch-input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .switch-input { opacity: 0; /* allow-opacity: checkbox nativo oculto para accesibilidad */ width: 0; height: 0; position: absolute; }
     .switch-slider {
       position: absolute; cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
