@@ -8,6 +8,7 @@ import { ValidationService } from '../../forms/validation.service';
 import { FormsApiService } from '../../forms/forms-api.service';
 import { VisitsApiService } from '../../visits/visits-api.service';
 import type { VisitWithForm, JsonSchema } from '../../forms/types';
+import { visitAccessMessage } from '../../core/http/visit-access';
 
 @Component({
   selector: 'app-expediente',
@@ -18,7 +19,8 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
       @if (loading()) {
         <div class="loading">Cargando expediente...</div>
       } @else if (error(); as message) {
-        <div class="error">{{ message }}</div>
+        <a routerLink="/planificacion" class="back-link">← Volver a planificación</a>
+        <div class="error" role="alert">{{ message }}</div>
       } @else if (visit(); as visit) {
         <div class="expediente-container">
           <header class="expediente-header">
@@ -147,9 +149,9 @@ export class ExpedienteComponent implements OnInit {
       this.visit.set(visit);
       this.loading.set(false);
     } catch (e) {
-      this.error.set('No se pudo cargar el expediente');
+      // 403 (otra jurisdicción) y 404 (no existe) se dicen distinto: no son el mismo problema.
+      this.error.set(visitAccessMessage(e) ?? 'No se pudo cargar el expediente.');
       this.loading.set(false);
-      console.error(e);
     }
   }
 }

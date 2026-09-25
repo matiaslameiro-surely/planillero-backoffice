@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -87,11 +88,38 @@ describe('ExpedienteComponent', () => {
   it('muestra el error y no queda cargando si la API falla', async () => {
     configure(visitId);
     vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(throwError(() => new Error('500')));
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const el = await render();
 
     expect(el.textContent).not.toContain('Cargando expediente');
     expect(el.querySelector('.error')?.textContent).toContain('No se pudo cargar el expediente');
+    // PLAN-63: el error se muestra en la pantalla, no se vuelca crudo a la consola.
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  // --- PLAN-63: «sin acceso» y «no existe» se dicen distinto ---
+
+  it('ante un 403 dice que no tenés acceso y ofrece volver', async () => {
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 403, error: { error: 'outside_jurisdiction' } })),
+    );
+    const el = await render();
+
+    expect(el.querySelector('.error')?.textContent).toContain('No tenés acceso a esta visita.');
+    expect(el.querySelector('a.back-link')?.textContent).toContain('Volver a planificación');
+  });
+
+  it('ante un 404 dice que la visita no existe y ofrece volver', async () => {
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404, error: { error: 'visit_not_found' } })),
+    );
+    const el = await render();
+
+    expect(el.querySelector('.error')?.textContent).toContain('La visita no existe.');
+    expect(el.querySelector('a.back-link')).not.toBeNull();
   });
 
   it('muestra el formulario en solo lectura cuando la visita tiene respuestas', async () => {

@@ -7,6 +7,10 @@
     </div>
   </header>
 
+  @if (accessError(); as message) {
+    <!-- Sin acceso o inexistente: no se muestra custodia ni evidencias, que serían información falsa. -->
+    <p class="access-error" role="alert">{{ message }}</p>
+  } @else {
   <!-- Panel de Auditoría y Manifiesto Criptográfico -->
   <section class="manifest-card">
     <div class="manifest-header">
@@ -177,6 +181,8 @@
       </div>
     }
   </section>
+
+  }
 
   <!-- Modal / Visor de inspección pericial -->
   @if (selectedEvidence(); as sel) {

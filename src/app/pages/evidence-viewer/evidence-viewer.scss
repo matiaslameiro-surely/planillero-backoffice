@@ -66,3 +66,4 @@
   summary{font-size:12px;font-weight:600;color:var(--color-text-muted);cursor:pointer;user-select:none;&:hover{color:var(--color-text)}}
   .manifest-meta{margin-top:10px}
 }
+.access-error{margin:24px 0;padding:16px;border:1px solid var(--color-status-alert-border);border-radius:8px;background:var(--color-status-alert-bg);color:var(--color-status-alert);font-weight:600}
