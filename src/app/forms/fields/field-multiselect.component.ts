@@ -60,8 +60,9 @@ import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
     ${READONLY_STYLES}
 
-    /* El chip es un <label> con un checkbox adentro: el contrato le pone la superficie y le quita
-       el cursor, pero su borde de "opción elegible" hay que anularlo acá.
+    /* El chip es un <label>, y el contrato compartido sólo alcanza a los controles nativos: le pone
+       la superficie al input que va adentro y le saca el cursor al label, pero el fondo y el borde
+       del propio label quedan sin cubrir. Por eso la superficie y el borde se resuelven acá.
 
        El selector excluye al seleccionado a propósito. Si se aplicara a todos, ganaría por
        especificidad a la regla de .chip-selected y todos los chips quedarían apagados: se vería qué
