@@ -5,14 +5,14 @@ import type { Tokens } from '../models/auth.model';
 /** Clave del refresh token en `localStorage`. */
 const REFRESH_KEY = 'planillero.refresh';
 
-export interface JwtPayload {
+interface JwtPayload {
   exp?: number;
   iat?: number;
   [key: string]: unknown;
 }
 
 /** Decodifica el payload de un JWT sin validar la firma. Devuelve null si no es un JWT válido. */
-export function parseJwt(token: string): JwtPayload | null {
+function parseJwt(token: string): JwtPayload | null {
   try {
     const parts = token.split('.');
     if (parts.length < 2) {
@@ -63,10 +63,6 @@ export class TokenStoreService {
   getRefreshToken(): string | null {
     // En memoria primero: cubre los entornos donde `localStorage` no existe o está bloqueado.
     return this.refreshToken ?? this.readRefresh();
-  }
-
-  getExpiresAt(): number | null {
-    return this.expiresAt;
   }
 
   /**
