@@ -1,16 +1,18 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
+import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
 
 @Component({
   selector: 'app-field-text',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <label class="field-label" [for]="inputId">
         {{ label() }}
-        @if (required()) {
+        @if (required() && !readonly()) {
           <span class="required"> *</span>
         }
       </label>
@@ -22,8 +24,8 @@ import { CommonModule } from '@angular/common';
         (input)="onInput($event)"
         (blur)="blurEvent.emit()"
         [readonly]="readonly()"
-        [maxLength]="schema()['maxLength']"
-        [placeholder]="description()"
+        [maxLength]="maxLength()"
+        [placeholder]="readonly() ? '' : description()"
       />
       @if (touched() && error()) {
         <div class="field-error">{{ error() }}</div>
@@ -43,11 +45,11 @@ import { CommonModule } from '@angular/common';
       background: var(--color-surface);
       box-sizing: border-box;
     }
-    .field-input:read-only { background: var(--color-surface-muted); }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
   `],
 })
-export class FieldTextComponent implements OnInit {
+export class FieldTextComponent {
   name = input.required<string>();
   schema = input.required<Record<string, unknown>>();
   value = input<unknown>('');
@@ -60,19 +62,16 @@ export class FieldTextComponent implements OnInit {
   description = input<string>();
   required = input<boolean>(false);
 
-  protected maxLength = 0;
+  // Derivado del signal de entrada y no leído en ngOnInit: si el esquema cambia con el componente
+  // ya montado, el límite se actualiza (PLAN-60).
+  protected readonly maxLength = computed<number>(() => (this.schema()['maxLength'] as number) ?? 0);
   protected inputId = `field-text-${crypto.randomUUID().slice(0, 8)}`;
 
-  ngOnInit() {
-    this.maxLength = (this.schema()['maxLength'] as number) ?? 0;
-  }
-
-  protected onInput(event: Event) {
+  protected onInput(event: Event): void {
+    if (this.readonly()) {
+      return;
+    }
     const target = event.target as HTMLInputElement;
     this.valueChange.emit(target.value);
-  }
-
-  protected onBlur() {
-    this.blurEvent.emit();
   }
 }

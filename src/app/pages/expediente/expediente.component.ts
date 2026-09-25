@@ -47,7 +47,11 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
             <div class="expediente-main-column">
               @if (formSchema(); as formSchema) {
                 @if (visit.responses) {
-                <section class="form-section">
+                <section
+                  class="form-section"
+                  role="group"
+                  aria-label="Formulario en modo solo lectura, registro histórico de la visita"
+                >
                   <h2>Formulario completado</h2>
                   <div class="form-readonly-note">Modo solo lectura - Expediente digital</div>
                   <app-dynamic-form
