@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AppDatePipe, LabelPipe, ShortIdPipe } from '../../core/display/display.pipes';
@@ -24,6 +24,16 @@ function messageOf(error: unknown): string {
 }
 
 const PAGE_SIZE = 20;
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Código de visita: segmentos alfanuméricos separados por guiones (`V-1001`, `T-AUDIT-1`). El backend
+ * no impone un formato, así que acá sólo se descarta lo que no puede ser un código.
+ */
+const VISIT_CODE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)+$/i;
+
+/** Cuánto dura la tilde de «ID copiado» en el botón. */
+const COPIED_FEEDBACK_MS = 2000;
 
 /** Inicio del día local elegido (`yyyy-MM-dd`), como instante ISO para el parámetro `from`. */
 function startOfDay(date: string): string | undefined {
@@ -50,7 +60,7 @@ function endOfDay(date: string): string | undefined {
   styleUrl: './auditoria.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Auditoria {
+export class Auditoria implements OnDestroy {
   private readonly audit = inject(AuditService);
 
   protected readonly logs = signal<AuditLogEntry[]>([]);
@@ -73,9 +83,18 @@ export class Auditoria {
   protected readonly verifyVisitId = signal('');
   protected readonly verifying = signal(false);
   protected readonly verificationResult = signal<ChainVerificationResult | null>(null);
+  protected readonly verifyError = signal<string | null>(null);
+
+  /** ID de la última entidad copiada, para mostrar la confirmación en su fila. */
+  protected readonly copiedId = signal<string | null>(null);
+  private copiedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.reload();
+  }
+
+  ngOnDestroy(): void {
+    this.clearCopied();
   }
 
   protected onEventTypeChange(event: Event): void {
@@ -135,12 +154,45 @@ export class Auditoria {
     this.verifyVisitId.set((event.target as HTMLInputElement).value);
   }
 
-  /** "Auditar Integridad de Visita": con el campo vacío verifica la cadena completa. */
+  /** Copia el UUID completo de la entidad, que en la grilla sólo se ve abreviado o en el tooltip. */
+  protected copyEntityId(entityId: string): void {
+    // Fuera de un contexto seguro (http que no sea localhost) el navegador no expone el portapapeles.
+    if (!navigator.clipboard) {
+      this.error.set('El navegador no permite copiar desde esta página. El ID completo está en el tooltip.');
+      return;
+    }
+    navigator.clipboard.writeText(entityId).then(
+      () => {
+        // Copiar otro ID antes de que venza reinicia el plazo: la tilde siempre dura lo mismo.
+        this.clearCopied();
+        this.copiedId.set(entityId);
+        this.copiedTimeoutId = setTimeout(() => this.clearCopied(), COPIED_FEEDBACK_MS);
+      },
+      () => this.error.set('No se pudo copiar el ID al portapapeles.'),
+    );
+  }
+
+  private clearCopied(): void {
+    if (this.copiedTimeoutId !== null) {
+      clearTimeout(this.copiedTimeoutId);
+      this.copiedTimeoutId = null;
+    }
+    this.copiedId.set(null);
+  }
+
+  /**
+   * "Auditar Integridad de Visita": con el campo vacío verifica la cadena completa. Acepta el UUID o el
+   * código de la visita; si el valor no tiene forma de ninguno, avisa sin llamar al backend.
+   */
   protected verifyIntegrity(): void {
-    this.verifying.set(true);
     this.verificationResult.set(null);
-    this.error.set(null);
+    this.verifyError.set(null);
     const visitId = this.verifyVisitId().trim() || undefined;
+    if (visitId && !UUID_PATTERN.test(visitId) && !VISIT_CODE_PATTERN.test(visitId)) {
+      this.verifyError.set('Ingresá un ID o un código de visita válido.');
+      return;
+    }
+    this.verifying.set(true);
     this.audit.verify(visitId).subscribe({
       next: (result) => {
         this.verifying.set(false);
@@ -148,7 +200,7 @@ export class Auditoria {
       },
       error: (error: unknown) => {
         this.verifying.set(false);
-        this.error.set(messageOf(error));
+        this.verifyError.set(messageOf(error));
       },
     });
   }
@@ -160,6 +212,8 @@ export class Auditoria {
   }
 
   private reload(): void {
+    // Al paginar o refiltrar, la tilde de otra carga no tiene que quedar en la grilla nueva.
+    this.clearCopied();
     this.loading.set(true);
     this.error.set(null);
     this.audit

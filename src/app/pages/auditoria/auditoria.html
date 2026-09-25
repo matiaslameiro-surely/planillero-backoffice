@@ -12,12 +12,13 @@
     <h2 class="auditoria__section">Auditar Integridad de Visita</h2>
     <div class="auditoria__verify-controls">
       <label class="auditoria__field">
-        <span>ID de visita (vacío = cadena completa)</span>
+        <span>ID o código de visita (vacío = cadena completa)</span>
         <input
           type="text"
           [value]="verifyVisitId()"
           (input)="onVerifyVisitIdChange($event)"
-          aria-label="ID de visita a auditar" />
+          placeholder="Ej.: V-1001"
+          aria-label="ID o código de visita a auditar" />
       </label>
       <button
         type="button"
@@ -27,6 +28,10 @@
         {{ verifying() ? 'Auditando…' : 'Auditar Integridad de Visita' }}
       </button>
     </div>
+
+    @if (verifyError(); as verifyError) {
+      <p class="auditoria__feedback auditoria__feedback--error" role="alert">{{ verifyError }}</p>
+    }
 
     @if (verificationResult(); as result) {
       <p
@@ -62,7 +67,7 @@
         type="text"
         [value]="usernameFilter()"
         (change)="onUsernameChange($event)"
-        placeholder="operador.demo"
+        placeholder="Filtrar por usuario"
         aria-label="Usuario" />
     </label>
 
@@ -117,8 +122,16 @@
               </td>
               <td>
                 <span [title]="entityDescription(log.entityType)">{{ log.entityType | label: 'entityType' }}</span>
-                @if (log.entityId) {
-                  / <code class="auditoria__code" [title]="log.entityId">{{ log.entityId | shortId }}</code>
+                @if (log.entityId; as entityId) {
+                  <code class="auditoria__code" [title]="entityId">{{ log.entityCode ?? (entityId | shortId) }}</code>
+                  <button
+                    type="button"
+                    class="auditoria__copy"
+                    (click)="copyEntityId(entityId)"
+                    [title]="copiedId() === entityId ? 'ID copiado' : 'Copiar el ID completo'"
+                    [attr.aria-label]="'Copiar el ID ' + entityId">
+                    {{ copiedId() === entityId ? '✓' : '⧉' }}
+                  </button>
                 }
               </td>
               <td>{{ log.username }}</td>

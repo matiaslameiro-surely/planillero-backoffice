@@ -4,6 +4,8 @@ export interface AuditLogEntry {
   eventType: string;
   entityType: string;
   entityId: string | null;
+  /** Código de la visita (`V-1001`) en las filas `VISIT`; `null` en las demás o si no se encontró. */
+  entityCode: string | null;
   username: string;
   ip: string | null;
   deviceId: string | null;
