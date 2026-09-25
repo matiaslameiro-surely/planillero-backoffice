@@ -283,6 +283,18 @@ describe('Componentes de campo del formulario dinámico (PLAN-60)', () => {
       expect(el.textContent).not.toContain('Seleccionar');
     });
 
+    it('el select en readonly muestra y selecciona el valor guardado aunque no sea el primero del enum', () => {
+      const { el } = montar(FieldSelectComponent, {
+        name: 'estado',
+        schema: SCHEMA_ENUM,
+        value: 'CERRADO',
+        readonly: true,
+      });
+      const select = el.querySelector('select') as HTMLSelectElement;
+      expect(select.value).toBe('CERRADO');
+      expect(select.options[select.selectedIndex]?.textContent?.trim()).toBe('CERRADO');
+    });
+
     it('un select sin valor muestra la raya, no una caja vacía', () => {
       const { el } = montar(FieldSelectComponent, {
         name: 'estado',

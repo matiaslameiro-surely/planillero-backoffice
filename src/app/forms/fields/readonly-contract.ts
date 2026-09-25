@@ -49,22 +49,17 @@ export const READONLY_STYLES = `
 
   /* Sin caja: en solo lectura el campo no es un control. El borde más fuerte de la paleta
      (#cbd5e0) da 1,42:1 contra su fondo, muy por debajo del 3:1 de WCAG 1.4.11, así que un borde
-     más tenue no podría ser el que informa del estado. Lo que informa es la superficie. */
+     más tenue no podría ser el que informa del estado. Lo que informa es la superficie.
+     Se declara 'color' y además '-webkit-text-fill-color' como propiedad para asegurar que motores
+     basados en WebKit/Blink mantengan el contraste completo aún en controles deshabilitados. */
   [data-readonly] input,
   [data-readonly] select,
   [data-readonly] textarea {
     background: var(--color-surface-muted);
     border-color: transparent;
     color: var(--color-text);
-    cursor: default;
-  }
-
-  /* Blink atenúa el texto de un control deshabilitado con -webkit-text-fill-color, y esa propiedad
-     le gana a 'color': sin esta línea el <select> del expediente queda por debajo de 4,5:1 y no hay
-     forma de arreglarlo desde el autor. Firefox y WebKit sí respetan 'color'; se emiten las dos. */
-  [data-readonly] input::-webkit-text-fill-color,
-  [data-readonly] select::-webkit-text-fill-color {
     -webkit-text-fill-color: var(--color-text);
+    cursor: default;
   }
 
   [data-readonly] label {

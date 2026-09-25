@@ -28,13 +28,13 @@ import { EMPTY_READONLY_VALUE, READONLY_ATTRIBUTE, READONLY_STYLES } from './rea
             <!-- En solo lectura no se ofrece la opción de arranque: sugiere una elección pendiente
                  sobre un registro ya enviado. Si no hay valor, una raya lo dice sin inventar texto. -->
             @if (!hasValue()) {
-              <option value="">{{ EMPTY_READONLY_VALUE }}</option>
+              <option value="" [selected]="!hasValue()">{{ EMPTY_READONLY_VALUE }}</option>
             }
           } @else {
-            <option value="">{{ description() || 'Seleccionar...' }}</option>
+            <option value="" [selected]="!hasValue()">{{ description() || 'Seleccionar...' }}</option>
           }
           @for (option of enumValues(); track option) {
-            <option [value]="option">{{ option }}</option>
+            <option [value]="option" [selected]="option === value()">{{ option }}</option>
           }
         </select>
       </div>

@@ -158,10 +158,11 @@ describe('Contrato de solo lectura (PLAN-60)', () => {
       expect(READONLY_STYLES).not.toContain('opacity');
     });
 
-    it('anula el atenuado que Blink aplica al texto de un control deshabilitado', () => {
-      // En Blink, -webkit-text-fill-color le gana a 'color': sin esta regla el <select> del
-      // expediente queda por debajo de 4,5:1 y no hay forma de arreglarlo desde el autor.
+    it('anula el atenuado que Blink aplica al texto de un control deshabilitado como propiedad', () => {
+      // En Blink, -webkit-text-fill-color le gana a 'color'. Se aplica como propiedad CSS en el bloque
+      // de controles nativos y no como pseudo-elemento (que es sintaxis inválida y el navegador ignora).
       expect(READONLY_STYLES).toContain('-webkit-text-fill-color: var(--color-text)');
+      expect(READONLY_STYLES).not.toContain('::-webkit-text-fill-color');
     });
 
     it('conserva el indicador de foco, porque el campo sigue siendo focalizable', () => {
