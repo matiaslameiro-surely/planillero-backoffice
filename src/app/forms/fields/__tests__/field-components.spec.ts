@@ -337,5 +337,21 @@ describe('Componentes de campo del formulario dinámico (PLAN-60)', () => {
 
       expect(emitido).toHaveBeenCalledWith('Sin novedad');
     });
+
+    it('el campo numérico en modo edit conserva fondo blanco y no hereda la superficie de solo lectura', () => {
+      // El estilo local .field-input:read-only se eliminó y se delega al contrato compartido.
+      // El contrato usa [data-readonly] input { background: var(--color-surface-muted) }, que
+      // SÓLO aplica cuando el contenedor tiene el atributo. En modo edit no lo tiene, así que
+      // el fondo debe seguir siendo --color-surface (blanco). Este test evita que una regla
+      // global o un orden de especificidad filtre el muted a modo edit.
+      const { el } = montar(FieldNumberComponent, {
+        name: 'monto',
+        schema: { type: 'number', title: 'Monto' },
+        readonly: false,
+      });
+      const input = el.querySelector('input') as HTMLInputElement;
+      const estilo = getComputedStyle(input);
+      expect(estilo.backgroundColor).not.toBe('rgb(248, 250, 252)');
+    });
   });
 });
