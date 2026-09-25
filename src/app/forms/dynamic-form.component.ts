@@ -216,6 +216,9 @@ export class DynamicFormComponent {
   }
 
   protected onBlur(name: string): void {
+    if (this.isReadonly()) {
+      return;
+    }
     this.touched.update((t) => ({ ...t, [name]: true }));
     const message = this.validationService.validateField(
       this.schema(),
