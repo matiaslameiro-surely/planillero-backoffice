@@ -21,57 +21,12 @@ const PUBLIC_PATHS = [
 /** Margen de anticipación en segundos para renovar el token antes de su vencimiento. */
 const REFRESH_MARGIN_SECONDS = 30;
 
-interface JwtPayload {
-  exp?: number;
-  [key: string]: unknown;
-}
-
-/** Decodifica el payload de un JWT sin validar la firma. Devuelve null si no es un JWT válido. */
-function parseJwt(token: string): JwtPayload | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) {
-      return null;
-    }
-    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const pad = base64.length % 4;
-    if (pad) {
-      base64 += '='.repeat(4 - pad);
-    }
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(''),
-    );
-    return JSON.parse(jsonPayload) as JwtPayload;
-  } catch {
-    return null;
-  }
-}
-
-/** Determina si el token está por expirar dentro del margen establecido (o ya expiró). */
-function isTokenExpiringSoon(token: string | null): boolean {
-  if (!token) {
-    return false;
-  }
-  const payload = parseJwt(token);
-  if (!payload || typeof payload.exp !== 'number') {
-    return false;
-  }
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  return payload.exp - nowInSeconds <= REFRESH_MARGIN_SECONDS;
-}
-
 /** Evalúa si corresponde renovar el token antes de enviar la petición. */
-function shouldRefreshToken(accessToken: string | null, refreshToken: string | null): boolean {
-  if (!refreshToken) {
+function shouldRefreshToken(store: TokenStoreService): boolean {
+  if (!store.getRefreshToken()) {
     return false;
   }
-  if (!accessToken) {
-    return true;
-  }
-  return isTokenExpiringSoon(accessToken);
+  return store.isAccessTokenExpiring(REFRESH_MARGIN_SECONDS);
 }
 
 /** Verifica si la URL de la petición corresponde a un endpoint público. */
@@ -88,6 +43,7 @@ function isPublicUrl(url: string): boolean {
  * 2. Renovar proactivamente el access token antes de que expire (con margen de 30s) si hay refresh token.
  * 3. Adjuntar `Authorization: Bearer` en peticiones protegidas.
  * 4. Como red de seguridad, capturar respuestas 401 para reintentar la petición una vez con refresh.
+ *    Si la petición ya fue precedida por una renovación, ante un 401 propaga el error sin reintentar.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
@@ -97,14 +53,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const sendWithToken = (token: string | null) => {
+  const sendWithToken = (token: string | null, options: { refreshed?: boolean } = {}) => {
     const authorized = token
       ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
       : request;
 
     return next(authorized).pipe(
       catchError((error: unknown) => {
-        if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
+        if (options.refreshed || !(error instanceof HttpErrorResponse) || error.status !== 401) {
           return throwError(() => error);
         }
         return auth.refresh().pipe(
@@ -116,12 +72,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     );
   };
 
-  const accessToken = store.getAccessToken();
-  const refreshToken = store.getRefreshToken();
-
-  if (shouldRefreshToken(accessToken, refreshToken)) {
-    return auth.refresh().pipe(switchMap((tokens) => sendWithToken(tokens.accessToken)));
+  if (shouldRefreshToken(store)) {
+    return auth.refresh().pipe(
+      switchMap((tokens) => sendWithToken(tokens.accessToken, { refreshed: true })),
+    );
   }
 
-  return sendWithToken(accessToken);
+  return sendWithToken(store.getAccessToken());
 };

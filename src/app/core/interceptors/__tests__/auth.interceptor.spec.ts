@@ -1,17 +1,20 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { environment } from '../../../environments/environment';
 import { authInterceptor } from '../auth.interceptor';
 import { TokenStoreService } from '../../services/token-store.service';
 
-/** Genera un JWT sintético para pruebas con el claim `exp` desfasado respecto al momento actual. */
-function createTestJwt(expInSecondsFromNow: number): string {
+/** Genera un JWT sintético para pruebas con claims `iat` y `exp`. */
+function createTestJwt(
+  expInSecondsFromNow: number,
+  iatInSeconds: number = Math.floor(Date.now() / 1000),
+): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const exp = Math.floor(Date.now() / 1000) + expInSecondsFromNow;
-  const payload = btoa(JSON.stringify({ sub: 'user.test', exp }));
+  const exp = iatInSeconds + expInSecondsFromNow;
+  const payload = btoa(JSON.stringify({ sub: 'user.test', iat: iatInSeconds, exp }));
   return `${header}.${payload}.mockSignature`;
 }
 
@@ -190,6 +193,83 @@ describe('authInterceptor', () => {
       .flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(error).toBeTruthy();
+    expect(store.getRefreshToken()).toBeNull();
+  });
+
+  it('no renueva en cada petición si el reloj local está adelantado respecto del servidor', () => {
+    vi.useFakeTimers();
+    try {
+      // Servidor emite un token con su hora (por ejemplo, 1_700_000_000) y TTL de 15 minutos (900s)
+      const serverTimeSec = 1_700_000_000;
+      // PC local tiene el reloj adelantado 1 hora (3600s) respecto al servidor
+      const clientTimeSec = serverTimeSec + 3600;
+      vi.setSystemTime(new Date(clientTimeSec * 1000));
+
+      const serverToken = createTestJwt(900, serverTimeSec);
+      store.set({ accessToken: serverToken, refreshToken: 'r1' });
+
+      http.get(`${apiUrl}/api/v1/auth/me`).subscribe();
+
+      // No debe disparar refresh proactivo: el token recién emitido tiene vigencia de 900s según recibidoLocal + (exp - iat)
+      httpMock.expectNone(`${apiUrl}/api/v1/auth/refresh`);
+
+      const req = httpMock.expectOne(`${apiUrl}/api/v1/auth/me`);
+      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${serverToken}`);
+      req.flush({ username: 'demo' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('no realiza un segundo refresh si la petición con token renovado anticipadamente devuelve 401', () => {
+    const expiringToken = createTestJwt(10);
+    const refreshedToken = createTestJwt(900);
+    store.set({ accessToken: expiringToken, refreshToken: 'r1' });
+
+    let error: unknown;
+    http.get(`${apiUrl}/api/v1/recurso`).subscribe({
+      error: (e) => (error = e),
+    });
+
+    // 1. Refresh proactivo inicial
+    const refreshReq = httpMock.expectOne(`${apiUrl}/api/v1/auth/refresh`);
+    refreshReq.flush({ accessToken: refreshedToken, refreshToken: 'r2' });
+
+    // 2. Se envía la petición con el token recién renovado
+    const recursoReq = httpMock.expectOne(`${apiUrl}/api/v1/recurso`);
+    expect(recursoReq.request.headers.get('Authorization')).toBe(`Bearer ${refreshedToken}`);
+
+    // El servidor responde 401 (por ejemplo, sesión revocada en backend o claves rotadas)
+    recursoReq.flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    // 3. No debe intentarse un segundo refresh para la misma petición
+    httpMock.expectNone(`${apiUrl}/api/v1/auth/refresh`);
+
+    expect(error).toBeTruthy();
+    expect((error as HttpErrorResponse).status).toBe(401);
+  });
+
+  it('si el refresh anticipado falla, no envía la petición original, propaga el error y cierra la sesión', () => {
+    const expiringToken = createTestJwt(10);
+    store.set({ accessToken: expiringToken, refreshToken: 'r1' });
+
+    let error: unknown;
+    http.get(`${apiUrl}/api/v1/planificacion`).subscribe({
+      error: (e) => (error = e),
+    });
+
+    // El refresh proactivo falla con 401 (por ejemplo, refresh token vencido o inválido)
+    const refreshReq = httpMock.expectOne(`${apiUrl}/api/v1/auth/refresh`);
+    refreshReq.flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    // La petición original nunca debe emitirse
+    httpMock.expectNone(`${apiUrl}/api/v1/planificacion`);
+
+    expect(error).toBeTruthy();
+    expect((error as HttpErrorResponse).status).toBe(401);
+
+    // La sesión debe quedar cerrada
+    expect(store.getAccessToken()).toBeNull();
     expect(store.getRefreshToken()).toBeNull();
   });
 });
