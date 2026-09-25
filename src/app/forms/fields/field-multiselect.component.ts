@@ -1,16 +1,18 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
+import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
 
 @Component({
   selector: 'app-field-multiselect',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <span class="field-label">
         {{ label() }}
-        @if (required()) {
+        @if (required() && !readonly()) {
           <span class="required"> *</span>
         }
       </span>
@@ -18,7 +20,7 @@ import { CommonModule } from '@angular/common';
         <p class="field-description">{{ description() }}</p>
       }
       <div class="chips-container">
-        @for (option of enumValues; track option) {
+        @for (option of enumValues(); track option) {
           <label class="chip" [class.chip-selected]="isSelected(option)">
             <input
               type="checkbox"
@@ -56,9 +58,22 @@ import { CommonModule } from '@angular/common';
     .chip-selected span { color: var(--color-surface); }
     .chip input { accent-color: var(--color-primary); }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
+
+    /* El chip es un <label> con un checkbox adentro: el contrato le pone la superficie y le quita
+       el cursor, pero su borde de "opción elegible" hay que anularlo acá.
+
+       El selector excluye al seleccionado a propósito. Si se aplicara a todos, ganaría por
+       especificidad a la regla de .chip-selected y todos los chips quedarían apagados: se vería qué
+       opciones existen, pero no cuáles están elegidas, que es justamente la información que hay que
+       conservar. En solo lectura se saca la señal de acción y se deja la de estado. */
+    [data-readonly] .chip:not(.chip-selected) {
+      background: var(--color-surface-muted);
+      border-color: transparent;
+    }
   `],
 })
-export class FieldMultiSelectComponent implements OnInit {
+export class FieldMultiSelectComponent {
   name = input.required<string>();
   schema = input.required<Record<string, unknown>>();
   value = input<unknown>([]);
@@ -71,12 +86,12 @@ export class FieldMultiSelectComponent implements OnInit {
   description = input<string>();
   required = input<boolean>(false);
 
-  protected enumValues: string[] = [];
-
-  ngOnInit() {
+  // Derivado del signal de entrada y no leído en ngOnInit: si el esquema cambia con el componente
+  // ya montado, las opciones se actualizan (PLAN-60).
+  protected readonly enumValues = computed<string[]>(() => {
     const items = this.schema()['items'] as Record<string, unknown> | undefined;
-    this.enumValues = (items?.['enum'] as string[]) ?? [];
-  }
+    return (items?.['enum'] as string[]) ?? [];
+  });
 
   protected selectedValue(): string[] {
     return (this.value() as string[]) ?? [];
@@ -86,7 +101,10 @@ export class FieldMultiSelectComponent implements OnInit {
     return this.selectedValue().includes(option);
   }
 
-  protected toggle(option: string) {
+  protected toggle(option: string): void {
+    if (this.readonly()) {
+      return;
+    }
     const current = this.selectedValue();
     const next = current.includes(option)
       ? current.filter((v) => v !== option)

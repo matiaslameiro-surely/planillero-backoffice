@@ -1,16 +1,18 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
+import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
 
 @Component({
   selector: 'app-field-number',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <label class="field-label" [for]="inputId">
         {{ label() }}
-        @if (required()) {
+        @if (required() && !readonly()) {
           <span class="required"> *</span>
         }
       </label>
@@ -24,8 +26,8 @@ import { CommonModule } from '@angular/common';
         [readonly]="readonly()"
         [min]="schema()['minimum']"
         [max]="schema()['maximum']"
-        [step]="schema()['type'] === 'integer' ? 1 : 'any'"
-        [placeholder]="description()"
+        [step]="isInteger() ? 1 : 'any'"
+        [placeholder]="readonly() ? '' : description()"
       />
       @if (touched() && error()) {
         <div class="field-error">{{ error() }}</div>
@@ -45,11 +47,11 @@ import { CommonModule } from '@angular/common';
       background: var(--color-surface);
       box-sizing: border-box;
     }
-    .field-input:read-only { background: var(--color-surface-muted); }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
   `],
 })
-export class FieldNumberComponent implements OnInit {
+export class FieldNumberComponent {
   name = input.required<string>();
   schema = input.required<Record<string, unknown>>();
   value = input<unknown>('');
@@ -62,27 +64,28 @@ export class FieldNumberComponent implements OnInit {
   description = input<string>();
   required = input<boolean>(false);
 
-  protected isInteger = false;
+  // Derivado del signal de entrada y no leído en ngOnInit: si el esquema cambia con el componente
+  // ya montado, el paso y el filtrado de la entrada se actualizan (PLAN-60).
+  protected readonly isInteger = computed<boolean>(() => this.schema()['type'] === 'integer');
   protected inputId = `field-number-${crypto.randomUUID().slice(0, 8)}`;
 
-  ngOnInit() {
-    this.isInteger = this.schema()['type'] === 'integer';
-  }
-
-  protected onInput(event: Event) {
+  protected onInput(event: Event): void {
+    if (this.readonly()) {
+      return;
+    }
     const target = event.target as HTMLInputElement;
     let clean = target.value;
 
-    if (this.isInteger) {
+    if (this.isInteger()) {
       clean = clean.replace(/[^0-9-]/g, '');
     } else {
       clean = clean.replace(/[^0-9.-]/g, '');
     }
 
     if (clean === '' || clean === '-' ||
-      (this.isInteger ? /^-?\d+$/.test(clean) : /^-?\d*\.?\d*$/.test(clean))) {
+      (this.isInteger() ? /^-?\d+$/.test(clean) : /^-?\d*\.?\d*$/.test(clean))) {
       const parsed = clean === '' || clean === '-' ? undefined :
-        this.isInteger ? parseInt(clean, 10) : parseFloat(clean);
+        this.isInteger() ? parseInt(clean, 10) : parseFloat(clean);
       this.valueChange.emit(parsed);
     }
   }

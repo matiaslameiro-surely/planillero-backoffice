@@ -2,17 +2,19 @@ import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
+import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
+
 @Component({
   selector: 'app-field-boolean',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <div class="boolean-row">
         <div class="label-wrapper">
           <span class="field-label">
             {{ label() }}
-            @if (required()) {
+            @if (required() && !readonly()) {
               <span class="required"> *</span>
             }
           </span>
@@ -62,6 +64,13 @@ import { CommonModule } from '@angular/common';
     input:checked + .switch-slider { background-color: var(--color-primary); }
     input:checked + .switch-slider:before { transform: translateX(24px); }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
+
+    /* El interruptor visible es un <span> decorativo, no un control, así que el contrato no lo
+       alcanza. Se le quita el cursor y se le da la superficie de solo lectura; el relleno del
+       estado encendido se conserva, porque es información y no acción. */
+    [data-readonly] .switch-label { cursor: default; }
+    [data-readonly] .switch-slider { cursor: default; background-color: var(--color-surface-muted); }
   `],
 })
 export class FieldBooleanComponent {
@@ -79,7 +88,10 @@ export class FieldBooleanComponent {
 
   protected checkboxId = `field-boolean-${crypto.randomUUID().slice(0, 8)}`;
 
-  protected onChange(event: Event) {
+  protected onChange(event: Event): void {
+    if (this.readonly()) {
+      return;
+    }
     const target = event.target as HTMLInputElement;
     this.valueChange.emit(target.checked);
   }
