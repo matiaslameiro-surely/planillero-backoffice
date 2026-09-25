@@ -36,9 +36,9 @@
     <label class="planificacion__field">
       <span>Operador</span>
       <select (change)="onOperatorChange($event)" [value]="selectedOperatorId()" aria-label="Operador">
-        <!-- El valor vacío sigue siendo "sin filtro" para la grilla, pero la etiqueta ya no lo
-             insinúa: sin operador elegido no hay a quién asignarle nada. -->
-        <option value="">Elegí un operador (se listan todas las visitas)</option>
+        <!-- El operador es el destinatario de la asignación: no filtra la grilla (PLAN-62). Sin
+             operador elegido no hay a quién asignarle nada. -->
+        <option value="">Elegí un operador</option>
         @for (operator of operators(); track operator.id) {
           <option [value]="operator.id">{{ operator.username }} ({{ operator.jurisdiction }})</option>
         }
