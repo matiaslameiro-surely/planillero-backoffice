@@ -126,7 +126,9 @@ describe('Supervision Component', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Tablero Central de Supervisión');
-    expect(compiled.textContent).toContain('ZONA_NORTE');
+    // La jurisdicción se muestra traducida, no con el código del backend (PLAN-64).
+    expect(compiled.textContent).toContain('Zona Norte');
+    expect(compiled.textContent).not.toContain('ZONA_NORTE');
     expect(compiled.textContent).toContain('50%');
   });
 

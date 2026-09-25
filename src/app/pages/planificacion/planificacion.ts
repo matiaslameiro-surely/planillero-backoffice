@@ -19,7 +19,7 @@ import type {
   VisitStatus,
   VisitUrgency,
 } from '../../core/models/planificacion.model';
-import { AppDayPipe, formatAppDate, LabelPipe } from '../../core/display/display.pipes';
+import { AppDayPipe, formatAppDate, formatAppDay, LabelPipe } from '../../core/display/display.pipes';
 import { labelFor } from '../../core/display/labels';
 import { PlanificacionService } from '../../core/services/planificacion.service';
 import { FocusTrap } from '../../shared/directives/focus-trap';
@@ -350,7 +350,7 @@ export class Planificacion implements OnDestroy {
           this.pendingAssignment.set(null);
           this.selected.set(new Set());
           this.setNotice(
-            `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
+            `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${formatAppDay(sheet.date)}.`,
           );
           if (sheet.operatorId === this.selectedOperatorId()) {
             this.routeSheet.set(sheet);

@@ -8,7 +8,7 @@
         @if (loading() && !summary()) {
           <span class="loading-inline">Cargando...</span>
         } @else {
-          <strong>{{ summary()?.jurisdiction || 'Sin asignar' }}</strong>
+          <strong>{{ (summary()?.jurisdiction | label: 'jurisdiction') || 'Sin asignar' }}</strong>
         }
         &bull; Fecha operativa:
         @if (loading() && !summary()) {
@@ -141,7 +141,7 @@
   }
 
   <!-- Layout Principal: Grilla Reactiva de Operadores y Mapa Operativo -->
-  <main class="supervision-main">
+  <div class="supervision-main">
     <!-- Panel Izquierdo: Lista reactiva de operadores -->
     <section class="operators-section" aria-label="Listado reactivo de operadores">
       <div class="section-title">
@@ -216,5 +216,5 @@
         />
       </div>
     </section>
-  </main>
+  </div>
 </div>

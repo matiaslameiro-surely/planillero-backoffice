@@ -178,3 +178,12 @@
     }
   }
 }
+
+// Aviso para un usuario sin rol de backoffice (PLAN-64).
+.home__role-notice {
+  padding: 16px;
+  border: 1px solid var(--color-status-info-border);
+  border-radius: 8px;
+  background: var(--color-status-info-bg);
+  color: var(--color-text);
+}

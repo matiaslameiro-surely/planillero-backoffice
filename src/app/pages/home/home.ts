@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import type { HealthResult } from '../../core/models/health.model';
@@ -28,6 +28,14 @@ export class Home {
   private readonly router = inject(Router);
 
   protected readonly user = this.auth.user;
+  /**
+   * Las secciones del backoffice son de supervisor y administrador. Un operador de campo sólo vería
+   * «Secciones operativas» vacío, así que se le explica dónde trabaja (PLAN-64).
+   */
+  protected readonly hasBackofficeRole = computed(() => {
+    const roles = this.user()?.roles ?? [];
+    return roles.includes('SUPERVISOR') || roles.includes('ADMINISTRATOR');
+  });
   protected readonly apiUrl = apiOriginLabel();
   protected readonly health = signal<HealthState>({ kind: 'checking' });
 

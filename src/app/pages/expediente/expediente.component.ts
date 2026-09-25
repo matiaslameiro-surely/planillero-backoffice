@@ -37,7 +37,7 @@ import type { VisitWithForm, JsonSchema } from '../../forms/types';
                 <dt>Código</dt><dd>{{ visit.code }}</dd>
                 <dt>Dirección</dt><dd>{{ visit.address }}</dd>
                 <dt>Coordenadas</dt><dd>{{ visit.latitude }}, {{ visit.longitude }}</dd>
-                <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction }}</dd>
+                <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction | label: 'jurisdiction' }}</dd>
                 <dt>Estado</dt><dd>{{ visit.status | label: 'visitStatus' }}</dd>
                 <dt>Urgencia</dt><dd>{{ visit.urgency | label: 'visitUrgency' }}</dd>
                 <dt>Creada</dt><dd>{{ visit.createdAt | appDate }}</dd>

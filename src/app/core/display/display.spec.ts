@@ -83,3 +83,15 @@ describe('formatAppDay', () => {
     expect(formatAppDay(undefined)).toBe('');
   });
 });
+
+describe('labelFor jurisdicción (PLAN-64)', () => {
+  it('traduce las jurisdicciones del seed', () => {
+    expect(labelFor('jurisdiction', 'ZONA_NORTE')).toBe('Zona Norte');
+    expect(labelFor('jurisdiction', 'ZONA_SUR')).toBe('Zona Sur');
+    expect(labelFor('jurisdiction', 'GLOBAL')).toBe('Global');
+  });
+
+  it('una jurisdicción sin traducción se ve tal cual', () => {
+    expect(labelFor('jurisdiction', 'ZONA_OESTE')).toBe('ZONA_OESTE');
+  });
+});
