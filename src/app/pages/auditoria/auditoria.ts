@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AppDatePipe, LabelPipe, ShortIdPipe } from '../../core/display/display.pipes';
@@ -26,8 +26,14 @@ function messageOf(error: unknown): string {
 const PAGE_SIZE = 20;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** Código de visita genérico (`<letras>-<números>`), para no atarse a la letra `V`. */
-const VISIT_CODE_PATTERN = /^[a-z]+-\d+$/i;
+/**
+ * Código de visita: segmentos alfanuméricos separados por guiones (`V-1001`, `T-AUDIT-1`). El backend
+ * no impone un formato, así que acá sólo se descarta lo que no puede ser un código.
+ */
+const VISIT_CODE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)+$/i;
+
+/** Cuánto dura la tilde de «ID copiado» en el botón. */
+const COPIED_FEEDBACK_MS = 2000;
 
 /** Inicio del día local elegido (`yyyy-MM-dd`), como instante ISO para el parámetro `from`. */
 function startOfDay(date: string): string | undefined {
@@ -54,7 +60,7 @@ function endOfDay(date: string): string | undefined {
   styleUrl: './auditoria.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Auditoria {
+export class Auditoria implements OnDestroy {
   private readonly audit = inject(AuditService);
 
   protected readonly logs = signal<AuditLogEntry[]>([]);
@@ -81,9 +87,14 @@ export class Auditoria {
 
   /** ID de la última entidad copiada, para mostrar la confirmación en su fila. */
   protected readonly copiedId = signal<string | null>(null);
+  private copiedTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.reload();
+  }
+
+  ngOnDestroy(): void {
+    this.clearCopied();
   }
 
   protected onEventTypeChange(event: Event): void {
@@ -151,9 +162,22 @@ export class Auditoria {
       return;
     }
     navigator.clipboard.writeText(entityId).then(
-      () => this.copiedId.set(entityId),
+      () => {
+        // Copiar otro ID antes de que venza reinicia el plazo: la tilde siempre dura lo mismo.
+        this.clearCopied();
+        this.copiedId.set(entityId);
+        this.copiedTimeoutId = setTimeout(() => this.clearCopied(), COPIED_FEEDBACK_MS);
+      },
       () => this.error.set('No se pudo copiar el ID al portapapeles.'),
     );
+  }
+
+  private clearCopied(): void {
+    if (this.copiedTimeoutId !== null) {
+      clearTimeout(this.copiedTimeoutId);
+      this.copiedTimeoutId = null;
+    }
+    this.copiedId.set(null);
   }
 
   /**
@@ -188,6 +212,8 @@ export class Auditoria {
   }
 
   private reload(): void {
+    // Al paginar o refiltrar, la tilde de otra carga no tiene que quedar en la grilla nueva.
+    this.clearCopied();
     this.loading.set(true);
     this.error.set(null);
     this.audit

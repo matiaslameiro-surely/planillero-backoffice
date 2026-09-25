@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuditLogEntry, AuditLogPage } from '../../core/models/audit.model';
 import { AuditService } from '../../core/services/audit.service';
@@ -241,6 +241,72 @@ describe('Auditoria', () => {
     expect((cell.querySelector('.auditoria__copy') as HTMLButtonElement).title).toBe('ID copiado');
   });
 
+  describe('confirmación de copiado', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: vi.fn(() => Promise.resolve()) },
+        configurable: true,
+      });
+    });
+
+    afterEach(() => vi.useRealTimers());
+
+    const copyButton = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('.auditoria__copy') as HTMLButtonElement;
+
+    async function copy(): Promise<void> {
+      copyButton().click();
+      // Resuelve la promesa de writeText sin adelantar el plazo de la tilde.
+      await vi.advanceTimersByTimeAsync(0);
+      fixture.detectChanges();
+    }
+
+    it('se borra sola a los 2 segundos', async () => {
+      create();
+
+      await copy();
+      expect(copyButton().title).toBe('ID copiado');
+
+      vi.advanceTimersByTime(1999);
+      fixture.detectChanges();
+      expect(copyButton().title).toBe('ID copiado');
+
+      vi.advanceTimersByTime(1);
+      fixture.detectChanges();
+      expect(copyButton().title).toBe('Copiar el ID completo');
+    });
+
+    it('volver a copiar reinicia el plazo', async () => {
+      create();
+
+      await copy();
+      vi.advanceTimersByTime(1500);
+      await copy();
+      vi.advanceTimersByTime(1500);
+      fixture.detectChanges();
+      expect(copyButton().title).toBe('ID copiado');
+
+      vi.advanceTimersByTime(500);
+      fixture.detectChanges();
+      expect(copyButton().title).toBe('Copiar el ID completo');
+    });
+
+    it('se borra al recargar la grilla', async () => {
+      create();
+
+      await copy();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector(
+        'select[aria-label="Tipo de evento"]',
+      );
+      select.value = 'VISIT_STARTED';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(copyButton().title).toBe('Copiar el ID completo');
+    });
+  });
+
   function verifyWith(value: string): void {
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
       'input[aria-label="ID o código de visita a auditar"]',
@@ -258,6 +324,14 @@ describe('Auditoria', () => {
 
     expect(vi.mocked(service.verify)).toHaveBeenCalledWith('V-1001');
     expect(fixture.nativeElement.querySelector('.auditoria__verify-result--ok')).not.toBeNull();
+  });
+
+  it('acepta códigos de varios segmentos, como los que no empiezan con V', () => {
+    create();
+
+    verifyWith('T-AUDIT-1');
+
+    expect(vi.mocked(service.verify)).toHaveBeenCalledWith('T-AUDIT-1');
   });
 
   it('no llama al backend si el valor no es un ID ni un código de visita', () => {
