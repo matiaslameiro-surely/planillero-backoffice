@@ -127,6 +127,15 @@ describe('ExpedienteComponent', () => {
     expect(seccion?.getAttribute('aria-label')).toContain('solo lectura');
   });
 
+  it('muestra la jurisdicción traducida (PLAN-64)', async () => {
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(of({ ...visit, jurisdiction: 'ZONA_NORTE' }));
+    const el = await render();
+
+    expect(el.querySelector('.visit-details')?.textContent).toContain('Zona Norte');
+    expect(el.querySelector('.visit-details')?.textContent).not.toContain('ZONA_NORTE');
+  });
+
   it('avisa si la ruta no trae el ID de la visita', async () => {
     configure(null);
     const el = await render();

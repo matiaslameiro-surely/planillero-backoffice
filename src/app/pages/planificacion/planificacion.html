@@ -1,4 +1,4 @@
-<main class="planificacion">
+<div class="planificacion">
   <header class="planificacion__header">
     <h1 class="planificacion__title">Planificación de rutas</h1>
     <a class="planificacion__back" routerLink="/">Volver al inicio</a>
@@ -40,7 +40,7 @@
              operador elegido no hay a quién asignarle nada. -->
         <option value="">Elegí un operador</option>
         @for (operator of operators(); track operator.id) {
-          <option [value]="operator.id">{{ operator.username }} ({{ operator.jurisdiction }})</option>
+          <option [value]="operator.id">{{ operator.username }} ({{ operator.jurisdiction | label: 'jurisdiction' }})</option>
         }
       </select>
     </label>
@@ -232,4 +232,4 @@
       </div>
     </div>
   }
-</main>
+</div>

@@ -240,6 +240,10 @@ describe('Planificacion', () => {
     expect(fixture.nativeElement.querySelector('.planificacion__feedback--ok').textContent).toContain(
       'Asignadas 1 visita(s)',
     );
+    // La fecha del aviso va en el formato de la app, no cruda (PLAN-64).
+    const aviso = fixture.nativeElement.querySelector('.planificacion__feedback--ok').textContent;
+    expect(aviso).toContain(`para ${formatAppDay(hoja.date)}.`);
+    expect(aviso).not.toContain(hoja.date);
     expect(bulkButton().textContent).toContain('(0)');
   });
 

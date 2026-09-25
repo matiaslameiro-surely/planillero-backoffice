@@ -1,4 +1,4 @@
-<main class="home">
+<div class="home">
   <header class="home__header">
     <h1 class="home__title">Panel de Control</h1>
     <p class="home__subtitle">Bienvenido/a al Backoffice de Planillero</p>
@@ -44,26 +44,34 @@
     </section>
   </div>
 
-  <section class="home__sections">
-    <h2 class="home__section-title">Secciones operativas</h2>
-    <div class="home__links-grid">
-      @if (u?.roles?.includes('SUPERVISOR')) {
-        <a class="home__nav-card" routerLink="/supervision">
-          <span class="home__nav-title">Tablero de supervisión</span>
-          <span class="home__nav-desc">Monitoreo en vivo de operadores, estado de SLA y mapa operativo en terreno.</span>
-        </a>
-        <a class="home__nav-card" routerLink="/planificacion">
-          <span class="home__nav-title">Planificación de rutas</span>
-          <span class="home__nav-desc">Asignación diaria de visitas, distribución de hojas de ruta y trazabilidad.</span>
-        </a>
-      }
+  @if (hasBackofficeRole()) {
+    <section class="home__sections">
+      <h2 class="home__section-title">Secciones operativas</h2>
+      <div class="home__links-grid">
+        @if (u?.roles?.includes('SUPERVISOR')) {
+          <a class="home__nav-card" routerLink="/supervision">
+            <span class="home__nav-title">Tablero de supervisión</span>
+            <span class="home__nav-desc">Monitoreo en vivo de operadores, estado de SLA y mapa operativo en terreno.</span>
+          </a>
+          <a class="home__nav-card" routerLink="/planificacion">
+            <span class="home__nav-title">Planificación de rutas</span>
+            <span class="home__nav-desc">Asignación diaria de visitas, distribución de hojas de ruta y trazabilidad.</span>
+          </a>
+        }
 
-      @if (u?.roles?.includes('ADMINISTRATOR')) {
-        <a class="home__nav-card" routerLink="/auditoria">
-          <span class="home__nav-title">Auditoría</span>
-          <span class="home__nav-desc">Registro inmutable append-only y verificación criptográfica de eventos.</span>
-        </a>
-      }
-    </div>
-  </section>
-</main>
+        @if (u?.roles?.includes('ADMINISTRATOR')) {
+          <a class="home__nav-card" routerLink="/auditoria">
+            <span class="home__nav-title">Auditoría</span>
+            <span class="home__nav-desc">Registro inmutable append-only y verificación criptográfica de eventos.</span>
+          </a>
+        }
+      </div>
+    </section>
+  } @else {
+    <!-- Un operador no tiene secciones acá: sin este aviso vería una lista vacía (PLAN-64). -->
+    <p class="home__role-notice" role="status">
+      Tu usuario es de operador de campo. El backoffice es para supervisores y administradores; para tu
+      trabajo usá la app móvil.
+    </p>
+  }
+</div>
