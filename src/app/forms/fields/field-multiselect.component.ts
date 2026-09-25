@@ -60,18 +60,17 @@ import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
     ${READONLY_STYLES}
 
-    /* El chip es un <label>, y el contrato compartido sólo alcanza a los controles nativos: le pone
-       la superficie al input que va adentro y le saca el cursor al label, pero el fondo y el borde
-       del propio label quedan sin cubrir. Por eso la superficie y el borde se resuelven acá.
+    /* El chip es un <label>, y el contrato compartido no le alcanza: le saca el cursor (eso sí lo
+       hace, porque el chip es el label de un control nativo) pero no toca la pastilla. Por eso acá
+       no hay ninguna regla de solo lectura para el chip, y es a propósito.
 
-       El selector excluye al seleccionado a propósito. Si se aplicara a todos, ganaría por
-       especificidad a la regla de .chip-selected y todos los chips quedarían apagados: se vería qué
-       opciones existen, pero no cuáles están elegidas, que es justamente la información que hay que
-       conservar. En solo lectura se saca la señal de acción y se deja la de estado. */
-    [data-readonly] .chip:not(.chip-selected) {
-      background: var(--color-surface-muted);
-      border-color: transparent;
-    }
+       En el expediente el formulario vive dentro de .form-section, que ya es
+       --color-surface-muted: pintar la pastilla de ese color la deja en 1,00:1 contra la sección y
+       un multiselect se ve como un conjunto de palabras sueltas, sin poder distinguir qué son
+       opciones y qué son respuestas. La pastilla conserva su relleno blanco y su borde porque el
+       borde es lo único que la separa de la sección: es el límite del valor, no la caja de un
+       control. Las señales de acción se sacan igual, y en otro lugar: el checkbox va deshabilitado
+       y el cursor es default. */
   `],
 })
 export class FieldMultiSelectComponent {

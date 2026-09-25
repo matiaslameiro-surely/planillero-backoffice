@@ -19,6 +19,19 @@
  * literal ahí y convierte el resto en código. El build falla con "Failed to resolve styles at
  * position 0 to a string", que no menciona el archivo ni la línea. No se puede cubrir con un test,
  * porque el build se cae antes de que corra la suite: es una restricción al escribir el CSS.
+ *
+ * Y el otro aviso, que costó un hallazgo de revisión: `--color-surface-muted` no es "la superficie
+ * de solo lectura", es una superficie más. En el expediente el formulario vive dentro de
+ * `.form-section`, que ya es ese mismo color, así que la regla de arriba no alcanza a las
+ * decoraciones que el contrato no cubre y, si se les aplica el mismo color, desaparecen: un
+ * interruptor apagado se ve como un vacío y un chip sin pastilla, como palabras sueltas.
+ *
+ * La regla que sí generaliza, y la que hay que aplicar caso por caso: la superficie de solo lectura
+ * sirve para todo lo que informa con su TEXTO --texto, número, select--, porque el texto va en
+ * 16,96:1 y se lee igual sin caja. No sirve para lo que informa con su propia SUPERFICIE o su
+ * posición --el interruptor, el chip--: esos tienen que conservar un color que se separe de lo que
+ * tengan detrás. Y si además viven dentro de un contenedor que ya es `--color-surface-muted`, el
+ * separador tiene que ser el borde o un token de valor, nunca la superficie.
  */
 
 /** Atributo que marca el contenedor de un campo como no editable. */

@@ -67,10 +67,16 @@ import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
     ${READONLY_STYLES}
 
     /* El interruptor visible es un <span> decorativo, no un control, así que el contrato no lo
-       alcanza. Se le quita el cursor y se le da la superficie de solo lectura; el relleno del
-       estado encendido se conserva, porque es información y no acción. */
+       alcanza. Lo único que hay que sacarle es el cursor: el contrato ya se lo saca al <label> que
+       lo envuelve.
+
+       Deliberadamente NO se le pone la superficie de solo lectura. El expediente muestra el
+       formulario dentro de .form-section, que ya es --color-surface-muted: un riel de ese mismo color
+       queda en 1,00:1 contra la sección, y un interruptor apagado se dibuja como un vacío, que es
+       indistinguible de "el campo no se renderizó". El riel conserva su color, y el estado
+       encendido y apagado quedan legibles: el interruptor informa del estado, no de una acción. */
     [data-readonly] .switch-label { cursor: default; }
-    [data-readonly] .switch-slider { cursor: default; background-color: var(--color-surface-muted); }
+    [data-readonly] .switch-slider { cursor: default; }
   `],
 })
 export class FieldBooleanComponent {

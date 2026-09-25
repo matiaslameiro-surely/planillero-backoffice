@@ -97,6 +97,52 @@ describe('Contrato de solo lectura (PLAN-60)', () => {
     it.each(COMPONENTES)('%s oculta el asterisco de requerido en solo lectura', (nombre) => {
       expect(leer(nombre)).toContain('required() && !readonly()');
     });
+
+    it.each(COMPONENTES)('%s no pinta decoraciones con --color-surface-muted en [data-readonly]', (nombre) => {
+      // El expediente usa .form-section con ese color. Una decoración (riel, pastilla) con el mismo
+      // color queda en 1,00:1 contra la sección: invisible. El contrato ya no llega a esos elementos,
+      // así que cada componente decide su propia regla; este test evita que se repita el error.
+      //
+      // Excepción documentada: .select-wrapper SÍ usa ese color para quitar la caja del select,
+      // porque en el select la información ES el texto (16,96:1). Lo mismo aplica a los wrappers de
+      // texto y número, pero esos no tienen regla local: el contrato llega al input nativo.
+      const fuente = leer(nombre);
+      const bloques = fuente.split('[data-readonly]');
+      for (let i = 1; i < bloques.length; i++) {
+        const bloque = bloques[i].slice(0, bloques[i].indexOf('}') + 1);
+        if (bloque.includes('background: var(--color-surface-muted)') ||
+            bloque.includes('background:var(--color-surface-muted)') ||
+            bloque.includes('background: var(--color-surface-muted )')) {
+          const permitidos = [
+            '.select-wrapper',
+          ];
+          const tienePermitido = permitidos.some((p) => bloque.includes(p));
+          if (!tienePermitido) {
+            throw new Error(
+              `${nombre}: bloque [data-readonly] pinta fondo con --color-surface-muted. ` +
+                'Ese color es el de la sección; una decoración con él desaparece. ' +
+                'Use un token que se separe o conserve el borde del modo edición. ' +
+                '(Excepción: .select-wrapper, donde la información es el texto y la caja se quita a propósito.)'
+            );
+          }
+        }
+      }
+    });
+
+    it.each(COMPONENTES)('%s no quita el borde de chips/pastillas en [data-readonly]', (nombre) => {
+      // Un chip es una pastilla: sin borde es una palabra suelta. El borde es información, no caja.
+      const fuente = leer(nombre);
+      const bloques = fuente.split('[data-readonly]');
+      for (let i = 1; i < bloques.length; i++) {
+        const bloque = bloques[i].slice(0, bloques[i].indexOf('}') + 1);
+        if (bloque.includes('.chip') && bloque.includes('border-color: transparent')) {
+          throw new Error(
+            `${nombre}: regla [data-readonly] sobre .chip quita el borde. ` +
+              'El borde es lo que separa la pastilla de la sección.'
+          );
+        }
+      }
+    });
   });
 
   describe('El contrato cumple lo que promete', () => {
@@ -163,6 +209,49 @@ describe('Contrato de solo lectura (PLAN-60)', () => {
       const fondo = token('color-surface-muted');
       expect(contraste(token('color-border-strong'), fondo)).toBeLessThan(3);
       expect(contraste(token('color-border'), fondo)).toBeLessThan(3);
+    });
+  });
+
+  describe('Lo que se ve sobre la superficie de solo lectura se ve de verdad', () => {
+    /**
+     * El expediente muestra el formulario dentro de `.form-section`, y ese contenedor es
+     * `--color-surface-muted`: la MISMA superficie que aplica el contrato. Por eso una decoración
+     * que se pinte de ese color no queda "del mismo tono que el control", queda invisible: en el
+     * caso del interruptor, un booleano apagado se dibujaba como un vacío, indistinguible de un
+     * campo que no se renderizó. Estos tests miden los pares que tienen que distinguirse, para que
+     * el defecto no dependa de que alguien mire la pantalla.
+     */
+    const seccion = () => token('color-surface-muted');
+
+    it('el riel del interruptor apagado se distingue de la sección', () => {
+      const ratio = contraste(token('color-border-strong'), seccion());
+      expect(
+        ratio,
+        `el riel apagado da ${ratio.toFixed(2)}:1 contra la sección: un interruptor en "no" ` +
+          'se ve como un vacío y se confunde con un campo que no se renderizó.',
+      ).toBeGreaterThan(1.2);
+    });
+
+    it('el knob del interruptor se distingue del riel, en los dos estados', () => {
+      // El knob es la única parte que se mueve: es lo que dice en qué estado está el interruptor.
+      expect(contraste(token('color-surface'), token('color-border-strong'))).toBeGreaterThan(1.2);
+      expect(contraste(token('color-surface'), token('color-primary'))).toBeGreaterThan(1.2);
+    });
+
+    it('el interruptor encendido se distingue de la sección', () => {
+      // El estado encendido lo aplica el navegador vía `input:checked`, con más especificidad que
+      // cualquier regla de solo lectura; conviene que siga siendo cierto.
+      expect(contraste(token('color-primary'), seccion())).toBeGreaterThan(3);
+    });
+
+    it('el chip no seleccionado se distingue de la sección', () => {
+      // El chip es una pastilla blanca: sola, sobre una sección casi blanca, no se ve. Lo que la
+      // hace visible es el borde, así que el borde es información y no la caja de un control.
+      expect(contraste(token('color-border-strong'), seccion())).toBeGreaterThan(1.2);
+    });
+
+    it('el chip seleccionado se distingue de la sección', () => {
+      expect(contraste(token('color-primary'), seccion())).toBeGreaterThan(3);
     });
   });
 });
