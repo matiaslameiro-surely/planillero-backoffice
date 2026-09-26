@@ -39,7 +39,7 @@ import { visitAccessMessage } from '../../core/http/visit-access';
                 <dt>Código</dt><dd>{{ visit.code }}</dd>
                 <dt>Dirección</dt><dd>{{ visit.address }}</dd>
                 <dt>Coordenadas</dt><dd>{{ visit.latitude }}, {{ visit.longitude }}</dd>
-                <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction }}</dd>
+                <dt>Jurisdicción</dt><dd>{{ visit.jurisdiction | label: 'jurisdiction' }}</dd>
                 <dt>Estado</dt><dd>{{ visit.status | label: 'visitStatus' }}</dd>
                 <dt>Urgencia</dt><dd>{{ visit.urgency | label: 'visitUrgency' }}</dd>
                 <dt>Creada</dt><dd>{{ visit.createdAt | appDate }}</dd>
@@ -49,7 +49,11 @@ import { visitAccessMessage } from '../../core/http/visit-access';
             <div class="expediente-main-column">
               @if (formSchema(); as formSchema) {
                 @if (visit.responses) {
-                <section class="form-section">
+                <section
+                  class="form-section"
+                  role="group"
+                  aria-label="Formulario en modo solo lectura, registro histórico de la visita"
+                >
                   <h2>Formulario completado</h2>
                   <div class="form-readonly-note">Modo solo lectura - Expediente digital</div>
                   <app-dynamic-form

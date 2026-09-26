@@ -3,6 +3,7 @@ export { FieldSelectComponent } from './field-select.component';
 export { FieldMultiSelectComponent } from './field-multiselect.component';
 export { FieldNumberComponent } from './field-number.component';
 export { FieldBooleanComponent } from './field-boolean.component';
+export { EMPTY_READONLY_VALUE, READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
 
 export function getFieldType(schema: Record<string, unknown>): string {
   const type = schema['type'] as string | undefined;

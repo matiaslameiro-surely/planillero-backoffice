@@ -19,7 +19,7 @@ import type {
   VisitStatus,
   VisitUrgency,
 } from '../../core/models/planificacion.model';
-import { AppDayPipe, formatAppDate, LabelPipe } from '../../core/display/display.pipes';
+import { AppDayPipe, formatAppDate, formatAppDay, LabelPipe } from '../../core/display/display.pipes';
 import { labelFor } from '../../core/display/labels';
 import { PlanificacionService } from '../../core/services/planificacion.service';
 import { FocusTrap } from '../../shared/directives/focus-trap';
@@ -224,14 +224,17 @@ export class Planificacion implements OnDestroy {
     const value = (event.target as HTMLInputElement).value;
     if (value) {
       this.selectedDate.set(value);
-      this.reloadVisits();
       this.reloadRouteSheet();
     }
   }
 
+  /**
+   * El operador es el destinatario de la asignación y el dueño de la hoja del panel lateral: no
+   * filtra la grilla. Si la filtrara, las visitas pendientes desaparecerían justo cuando hay a quién
+   * asignarlas (PLAN-62).
+   */
   protected onOperatorChange(event: Event): void {
     this.selectedOperatorId.set((event.target as HTMLSelectElement).value);
-    this.reloadVisits();
     this.reloadRouteSheet();
   }
 
@@ -252,8 +255,9 @@ export class Planificacion implements OnDestroy {
     return this.currentSheetIds().has(visit.id);
   }
 
+  /** El backend rechaza asignar una visita iniciada, cerrada o cancelada (`visit_not_assignable`). */
   protected isSelectable(visit: Visit): boolean {
-    return visit.status !== 'COMPLETED' && visit.status !== 'CANCELLED';
+    return visit.status !== 'IN_PROGRESS' && visit.status !== 'COMPLETED' && visit.status !== 'CANCELLED';
   }
 
   /**
@@ -346,7 +350,7 @@ export class Planificacion implements OnDestroy {
           this.pendingAssignment.set(null);
           this.selected.set(new Set());
           this.setNotice(
-            `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${sheet.date}.`,
+            `Asignadas ${visitIds.length} visita(s) a ${sheet.operatorUsername} para ${formatAppDay(sheet.date)}.`,
           );
           if (sheet.operatorId === this.selectedOperatorId()) {
             this.routeSheet.set(sheet);
@@ -374,15 +378,12 @@ export class Planificacion implements OnDestroy {
 
   private reloadVisits(): void {
     this.loading.set(true);
-    const operatorId = this.selectedOperatorId() || undefined;
     this.planificacion
       .getVisits({
+        // Sin `operatorId` ni `date`: con ellos el backend devuelve sólo lo que ya está en la hoja
+        // de ese operador y esa fecha, y la grilla es para ver qué falta asignar (PLAN-62).
         status: this.statusFilter() || undefined,
         urgency: this.urgencyFilter() || undefined,
-        operatorId,
-        // El parámetro date solo tiene sentido acotado a un operador: sin operador, la grilla
-        // muestra toda la jurisdicción y `date` solo devolvería visitas ya asignadas.
-        date: operatorId ? this.selectedDate() : undefined,
       })
       .subscribe({
         next: (visits) => {

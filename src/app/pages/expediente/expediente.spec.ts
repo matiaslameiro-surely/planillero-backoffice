@@ -135,6 +135,35 @@ describe('ExpedienteComponent', () => {
     expect(el.textContent).toContain('Modo solo lectura');
   });
 
+  it('el formulario en solo lectura se anuncia como un grupo con nombre', async () => {
+    // Sin nombre accesible, un lector de pantalla anuncia el formulario como un bloque suelto y no
+    // se sabe si es editable. El `role="group"` con `aria-label` es lo que comunica que lo que
+    // sigue es un registro ya enviado (PLAN-60).
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(
+      of({
+        ...visit,
+        templateKey: 'relevamiento',
+        templateVersion: 1,
+        responses: { observaciones: 'Sin novedad' },
+      }),
+    );
+    const el = await render();
+
+    const seccion = el.querySelector('.form-section');
+    expect(seccion?.getAttribute('role')).toBe('group');
+    expect(seccion?.getAttribute('aria-label')).toContain('solo lectura');
+  });
+
+  it('muestra la jurisdicción traducida (PLAN-64)', async () => {
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(of({ ...visit, jurisdiction: 'ZONA_NORTE' }));
+    const el = await render();
+
+    expect(el.querySelector('.visit-details')?.textContent).toContain('Zona Norte');
+    expect(el.querySelector('.visit-details')?.textContent).not.toContain('ZONA_NORTE');
+  });
+
   it('avisa si la ruta no trae el ID de la visita', async () => {
     configure(null);
     const el = await render();

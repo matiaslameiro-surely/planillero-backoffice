@@ -240,6 +240,10 @@ describe('Planificacion', () => {
     expect(fixture.nativeElement.querySelector('.planificacion__feedback--ok').textContent).toContain(
       'Asignadas 1 visita(s)',
     );
+    // La fecha del aviso va en el formato de la app, no cruda (PLAN-64).
+    const aviso = fixture.nativeElement.querySelector('.planificacion__feedback--ok').textContent;
+    expect(aviso).toContain(`para ${formatAppDay(hoja.date)}.`);
+    expect(aviso).not.toContain(hoja.date);
     expect(bulkButton().textContent).toContain('(0)');
   });
 
@@ -363,11 +367,111 @@ describe('Planificacion', () => {
     urgency.value = 'HIGH';
     urgency.dispatchEvent(new Event('change'));
 
+    // Sin operatorId ni date: el operador elegido no filtra la grilla (PLAN-62).
     expect(vi.mocked(service.getVisits)).toHaveBeenLastCalledWith({
       status: 'ASSIGNED',
       urgency: 'HIGH',
-      operatorId: operator.id,
-      date: dateInput().value,
+    });
+  });
+
+  describe('el operador es el destinatario, no un filtro de la grilla (PLAN-62)', () => {
+    const otraPendiente: Visit = {
+      ...pendiente,
+      id: 'a0000001-0000-4000-8000-000000000004',
+      code: 'V-1004',
+      urgency: 'LOW',
+    };
+
+    const enCurso: Visit = {
+      ...pendiente,
+      id: 'a0000001-0000-4000-8000-000000000005',
+      code: 'V-1005',
+      status: 'IN_PROGRESS',
+    };
+
+    function filas(): HTMLTableRowElement[] {
+      return Array.from(fixture.nativeElement.querySelectorAll('.planificacion__table tbody tr'));
+    }
+
+    function fila(code: string): HTMLTableRowElement {
+      return filas().find((row) => row.textContent?.includes(code))!;
+    }
+
+    it('elegir un operador o cambiar la fecha no vuelve a pedir la grilla ni la filtra', () => {
+      vi.mocked(service.getVisits).mockReturnValue(of([pendiente, otraPendiente]));
+      create();
+
+      elegirOperador();
+      ponerFecha('2099-01-15');
+
+      expect(vi.mocked(service.getVisits)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(service.getVisits)).toHaveBeenCalledWith({ status: undefined, urgency: undefined });
+      expect(filas().map((row) => row.cells[1].textContent?.trim())).toEqual(['V-1001', 'V-1004']);
+    });
+
+    it('con un operador elegido, «Asignar» de una pendiente queda habilitado y pasa por la confirmación', () => {
+      vi.mocked(service.getVisits).mockReturnValue(of([pendiente, otraPendiente]));
+      create();
+      elegirOperador();
+
+      const boton = fila('V-1004').querySelector('.planificacion__link') as HTMLButtonElement;
+      expect(boton.disabled).toBe(false);
+      boton.click();
+      fixture.detectChanges();
+      expect(confirmPanel()).not.toBeNull();
+
+      confirmar();
+      expect(vi.mocked(service.assign)).toHaveBeenCalledWith({
+        operatorId: operator.id,
+        date: dateInput().value,
+        visitIds: [otraPendiente.id],
+      });
+    });
+
+    it('las que ya están en su hoja se ven en la grilla completa como «Ya en su hoja»', () => {
+      vi.mocked(service.getVisits).mockReturnValue(of([pendiente, otraPendiente]));
+      vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
+      create();
+      elegirOperador();
+
+      expect(fila('V-1001').textContent).toContain('Ya en su hoja');
+      expect((fila('V-1001').querySelector('input[type="checkbox"]') as HTMLInputElement).disabled).toBe(true);
+      expect(fila('V-1004').querySelector('.planificacion__link')).not.toBeNull();
+    });
+
+    it('una visita en curso no se ofrece para asignar', () => {
+      vi.mocked(service.getVisits).mockReturnValue(of([pendiente, enCurso]));
+      create();
+      elegirOperador();
+
+      expect(fila('V-1005').textContent).toContain('No asignable');
+      expect(fila('V-1005').querySelector('input[type="checkbox"]')).toBeNull();
+      expect(fila('V-1005').querySelector('.planificacion__link')).toBeNull();
+    });
+
+    it('«Asignar seleccionadas» cuenta y manda lo marcado que se ve, sin lo que ya está en su hoja', () => {
+      vi.mocked(service.getVisits).mockReturnValue(of([pendiente, otraPendiente]));
+      vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
+      create();
+      (fila('V-1001').querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+      (fila('V-1004').querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+      elegirOperador();
+
+      expect(bulkButton().textContent).toContain('Asignar seleccionadas (1)');
+      bulkButton().click();
+      fixture.detectChanges();
+      confirmar();
+      expect(vi.mocked(service.assign)).toHaveBeenCalledWith({
+        operatorId: operator.id,
+        date: dateInput().value,
+        visitIds: [otraPendiente.id],
+      });
+    });
+
+    it('la opción vacía del selector ya no promete filtrar', () => {
+      create();
+      expect(findSelect('Operador').options[0].textContent?.trim()).toBe('Elegí un operador');
     });
   });
 

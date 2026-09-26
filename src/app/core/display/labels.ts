@@ -14,7 +14,8 @@ export type LabelKind =
   | 'evidenceType'
   | 'verificationStatus'
   | 'evidenceIntegrity'
-  | 'entityType';
+  | 'entityType'
+  | 'jurisdiction';
 
 const LABELS: Readonly<Record<LabelKind, Readonly<Record<string, string>>>> = {
   visitStatus: {
@@ -63,6 +64,12 @@ const LABELS: Readonly<Record<LabelKind, Readonly<Record<string, string>>>> = {
   },
   entityType: {
     VISIT: 'Visita',
+  },
+  // Jurisdicciones del seed; una nueva se ve cruda hasta que se agregue acá.
+  jurisdiction: {
+    ZONA_NORTE: 'Zona Norte',
+    ZONA_SUR: 'Zona Sur',
+    GLOBAL: 'Global',
   },
 };
 

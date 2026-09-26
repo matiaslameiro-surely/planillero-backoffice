@@ -2,17 +2,19 @@ import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
+import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
+
 @Component({
   selector: 'app-field-boolean',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <div class="boolean-row">
         <div class="label-wrapper">
           <span class="field-label">
             {{ label() }}
-            @if (required()) {
+            @if (required() && !readonly()) {
               <span class="required"> *</span>
             }
           </span>
@@ -62,6 +64,19 @@ import { CommonModule } from '@angular/common';
     input:checked + .switch-slider { background-color: var(--color-primary); }
     input:checked + .switch-slider:before { transform: translateX(24px); }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
+
+    /* El interruptor visible es un <span> decorativo, no un control, así que el contrato no lo
+       alcanza. Lo único que hay que sacarle es el cursor: el contrato ya se lo saca al <label> que
+       lo envuelve.
+
+       Deliberadamente NO se le pone la superficie de solo lectura. El expediente muestra el
+       formulario dentro de .form-section, que ya es --color-surface-muted: un riel de ese mismo color
+       queda en 1,00:1 contra la sección, y un interruptor apagado se dibuja como un vacío, que es
+       indistinguible de "el campo no se renderizó". El riel conserva su color, y el estado
+       encendido y apagado quedan legibles: el interruptor informa del estado, no de una acción. */
+    [data-readonly] .switch-label { cursor: default; }
+    [data-readonly] .switch-slider { cursor: default; }
   `],
 })
 export class FieldBooleanComponent {
@@ -79,7 +94,10 @@ export class FieldBooleanComponent {
 
   protected checkboxId = `field-boolean-${crypto.randomUUID().slice(0, 8)}`;
 
-  protected onChange(event: Event) {
+  protected onChange(event: Event): void {
+    if (this.readonly()) {
+      return;
+    }
     const target = event.target as HTMLInputElement;
     this.valueChange.emit(target.checked);
   }

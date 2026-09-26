@@ -5,6 +5,12 @@
 
 @import 'leaflet/dist/leaflet.css';
 
+/* Tipografía de toda la app. Sin esto, las pantallas que no la declaran en su propio estilo
+   (Supervisión, Expediente, Evidencias, Acceso denegado) caían en la serifa del navegador (PLAN-64). */
+body {
+  font-family: $font-base;
+}
+
 /* Escala de color del sistema, expuesta como CSS custom properties. Es la única forma en que los
    componentes con estilos embebidos (styles: [...] en el .ts) pueden consumir la escala, porque
    no pueden @use de las variables SCSS de _variables.scss. Los valores viven ahí y se emiten acá. */

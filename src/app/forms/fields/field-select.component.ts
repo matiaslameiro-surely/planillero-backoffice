@@ -1,16 +1,18 @@
-import { Component, input, output, OnInit } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
+import { EMPTY_READONLY_VALUE, READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
 
 @Component({
   selector: 'app-field-select',
   standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
-    <div class="field-container">
+    <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <label class="field-label" [for]="selectId">
         {{ label() }}
-        @if (required()) {
+        @if (required() && !readonly()) {
           <span class="required"> *</span>
         }
       </label>
@@ -22,9 +24,17 @@ import { CommonModule } from '@angular/common';
           (change)="onChange($event)"
           (blur)="blurEvent.emit()"
           [disabled]="readonly()">
-          <option value="">{{ description() || 'Seleccionar...' }}</option>
-          @for (option of enumValues; track option) {
-            <option [value]="option">{{ option }}</option>
+          @if (readonly()) {
+            <!-- En solo lectura no se ofrece la opción de arranque: sugiere una elección pendiente
+                 sobre un registro ya enviado. Si no hay valor, una raya lo dice sin inventar texto. -->
+            @if (!hasValue()) {
+              <option value="" [selected]="!hasValue()">{{ EMPTY_READONLY_VALUE }}</option>
+            }
+          } @else {
+            <option value="" [selected]="!hasValue()">{{ description() || 'Seleccionar...' }}</option>
+          }
+          @for (option of enumValues(); track option) {
+            <option [value]="option" [selected]="option === value()">{{ option }}</option>
           }
         </select>
       </div>
@@ -47,9 +57,20 @@ import { CommonModule } from '@angular/common';
       appearance: none;
     }
     .field-error { margin-top: 4px; font-size: 12px; color: var(--color-error); }
+    ${READONLY_STYLES}
+
+    /* El borde de este select no está en el <select>, que va con border:none, sino en el wrapper
+       que lo envuelve. El contrato compartido sólo alcanza a los controles nativos, así que sin
+       esta regla el expediente en solo lectura mostraría una caja idéntica a la de edición: la
+       señal de acción que la tarea pide eliminar. La regla es de este componente y no del contrato
+       porque el nombre de la clase no le corresponde al contrato saberlo. */
+    [data-readonly] .select-wrapper {
+      border-color: transparent;
+      background: var(--color-surface-muted);
+    }
   `],
 })
-export class FieldSelectComponent implements OnInit {
+export class FieldSelectComponent {
   name = input.required<string>();
   schema = input.required<Record<string, unknown>>();
   value = input<unknown>('');
@@ -62,14 +83,22 @@ export class FieldSelectComponent implements OnInit {
   description = input<string>();
   required = input<boolean>(false);
 
-  protected enumValues: string[] = [];
+  // Derivado del signal de entrada y no leído en ngOnInit: si el esquema cambia con el componente
+  // ya montado, las opciones se actualizan (PLAN-60).
+  protected readonly enumValues = computed<string[]>(
+    () => (this.schema()['enum'] as string[]) ?? [],
+  );
+  protected readonly EMPTY_READONLY_VALUE = EMPTY_READONLY_VALUE;
+  protected readonly hasValue = computed(() => {
+    const value = this.value();
+    return value !== null && value !== undefined && value !== '';
+  });
   protected selectId = `field-select-${crypto.randomUUID().slice(0, 8)}`;
 
-  ngOnInit() {
-    this.enumValues = (this.schema()['enum'] as string[]) ?? [];
-  }
-
-  protected onChange(event: Event) {
+  protected onChange(event: Event): void {
+    if (this.readonly()) {
+      return;
+    }
     const target = event.target as HTMLSelectElement;
     this.valueChange.emit(target.value);
   }
