@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AppDatePipe, LabelPipe } from '../../core/display/display.pipes';
@@ -112,7 +112,6 @@ import { visitAccessMessage } from '../../core/http/visit-access';
 })
 export class ExpedienteComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private formsApi = inject(FormsApiService);
   private visitsApi = inject(VisitsApiService);
   private validationService = inject(ValidationService);

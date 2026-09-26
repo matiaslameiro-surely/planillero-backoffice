@@ -47,6 +47,11 @@ export class EvidenceViewer implements OnInit {
    * sellado» y vacía, que es información falsa (PLAN-63).
    */
   protected readonly accessError = signal<string | null>(null);
+  /**
+   * El manifiesto no se pudo consultar por otro motivo (un 500, por ejemplo). Se muestra dentro de la
+   * tarjeta del manifiesto: las evidencias que sí cargaron siguen a la vista.
+   */
+  protected readonly manifestError = signal<string | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('visitId') ?? '';
@@ -60,6 +65,7 @@ export class EvidenceViewer implements OnInit {
     this.loading.set(true);
     this.loadingManifest.set(true);
     this.accessError.set(null);
+    this.manifestError.set(null);
     // Sólo para el título: si falla (un operador no tiene permiso sobre ese endpoint), el título
     // cae al UUID abreviado y el resto de la pantalla sigue igual.
     this.visitsApi.getVisitWithForm(id).subscribe({
@@ -86,11 +92,19 @@ export class EvidenceViewer implements OnInit {
         this.loadingManifest.set(false);
       },
       // «Pendiente de sellado» es un estado de la visita, no un error: sólo corresponde cuando el
-      // backend dice que no hay manifiesto. Otro error no se disfraza de pendiente.
+      // backend dice que no hay manifiesto. Un 403 o 404 hace inaccesible la visita entera; cualquier
+      // otro error es sólo del manifiesto y no tiene que tapar las evidencias que sí cargaron.
       error: (error: unknown) => {
         this.manifest.set(null);
-        if (apiErrorCode(error) !== 'manifest_not_found' && !this.accessError()) {
-          this.accessError.set(visitAccessMessage(error) ?? 'No se pudo consultar el sellado de la visita.');
+        if (apiErrorCode(error) !== 'manifest_not_found') {
+          const access = visitAccessMessage(error);
+          if (access) {
+            if (!this.accessError()) {
+              this.accessError.set(access);
+            }
+          } else {
+            this.manifestError.set('No se pudo consultar el sellado de la visita.');
+          }
         }
         this.loadingManifest.set(false);
       },

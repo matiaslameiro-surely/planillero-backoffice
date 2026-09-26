@@ -185,11 +185,24 @@ describe('EvidenceViewer ante visitas sin acceso o inexistentes', () => {
     expect(el.querySelector('.gallery-section')).not.toBeNull();
   });
 
-  it('un error del manifiesto que no es «no hay manifiesto» no se disfraza de pendiente', () => {
+  it('un error del manifiesto que no es «no hay manifiesto» se dice en su tarjeta y no tapa la galería', () => {
     vi.mocked(service.getManifest).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     const el = crear();
 
     expect(el.textContent).not.toContain('PENDIENTE DE SELLADO');
-    expect(el.querySelector('.access-error')?.textContent).toContain('No se pudo consultar el sellado de la visita.');
+    expect(el.querySelector('.access-error')).toBeNull();
+    expect(el.querySelector('.manifest-card .manifest-error')?.textContent).toContain(
+      'No se pudo consultar el sellado de la visita.',
+    );
+    expect(el.querySelector('.manifest-card .status-error')?.textContent).toContain('SELLADO NO DISPONIBLE');
+    expect(el.querySelector('.gallery-section')).not.toBeNull();
+  });
+
+  it('un 403 del manifiesto sí hace inaccesible la visita', () => {
+    vi.mocked(service.getManifest).mockReturnValue(throwError(() => http(403, 'outside_jurisdiction')));
+    const el = crear();
+
+    expect(el.querySelector('.access-error')?.textContent).toContain('No tenés acceso a esta visita.');
+    expect(el.querySelector('.gallery-section')).toBeNull();
   });
 });
