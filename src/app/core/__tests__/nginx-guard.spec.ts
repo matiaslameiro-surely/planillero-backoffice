@@ -37,8 +37,8 @@ describe('Guardia de Configuración NGINX (PLAN-45)', () => {
     expect(content).toContain('Directivas comunes de proxy: los `location` de abajo las heredan');
   });
 
-  it('debe incluir unsafe-eval en script-src de Content-Security-Policy para permitir compilación JIT de Ajv (PLAN-59)', () => {
+  it('no debe incluir unsafe-eval en script-src de Content-Security-Policy porque Ajv no compila esquemas dinámicos (PLAN-59)', () => {
     const content = fs.readFileSync(nginxConfPath, 'utf-8');
-    expect(content).toMatch(/Content-Security-Policy.*script-src\s+[^;]*'unsafe-eval'/);
+    expect(content).not.toMatch(/Content-Security-Policy.*script-src\s+[^;]*'unsafe-eval'/);
   });
 });

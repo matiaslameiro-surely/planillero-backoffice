@@ -34,23 +34,34 @@ describe('DynamicFormComponent (PLAN-59)', () => {
     validationService = TestBed.inject(ValidationService);
   });
 
-  it('en modo readonly, onBlur() no ejecuta validaciones de campo ni muta señales de error o tocados', () => {
+  it('en modo readonly, al disparar blur desde el template no ejecuta validaciones de campo ni muta señales de error, y no existe botón de envío', () => {
     fixture.componentRef.setInput('schema', mockSchema);
     fixture.componentRef.setInput('initialValues', { observaciones: 'abc' });
     fixture.componentRef.setInput('mode', 'readonly');
     fixture.detectChanges();
 
     const validateFieldSpy = vi.spyOn(validationService, 'validateField');
+    const validateSpy = vi.spyOn(validationService, 'validate');
 
-    // Invocamos el método protegido onBlur a través de la instancia
-    (component as unknown as { onBlur: (name: string) => void }).onBlur('observaciones');
-
+    // Buscamos el componente de campo texto en el DOM
+    const fieldTextDebugElement = fixture.debugElement.query((debugEl) => debugEl.name === 'app-field-text');
+    expect(fieldTextDebugElement).toBeTruthy();
+    
+    // Disparamos el evento blurEvent emitido por el componente app-field-text
+    fieldTextDebugElement.triggerEventHandler('blurEvent', undefined);
+    
     expect(validateFieldSpy).not.toHaveBeenCalled();
+    expect(validateSpy).not.toHaveBeenCalled();
+    
     const touched = (component as unknown as { touched: () => Record<string, boolean> }).touched();
     const errors = (component as unknown as { errors: () => Record<string, string> }).errors();
 
     expect(touched['observaciones']).toBeUndefined();
     expect(errors['observaciones']).toBeUndefined();
+
+    // Verificar que no hay botón de envío
+    const submitBtn = fixture.debugElement.query((debugEl) => debugEl.name === 'button' && debugEl.classes['btn-submit']);
+    expect(submitBtn).toBeNull();
   });
 
   it('en modo edit, onBlur() valida el campo y marca el campo como tocado', () => {
