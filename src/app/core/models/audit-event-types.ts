@@ -38,6 +38,12 @@ export const AUDIT_EVENT_TYPES: readonly AuditEventTypeInfo[] = [
     tone: 'warning',
   },
   {
+    code: 'VISIT_COMPLETED',
+    label: 'Visita completada',
+    description: 'El operador finalizó la visita en campo.',
+    tone: 'success',
+  },
+  {
     code: 'MANIFEST_SIGNED',
     label: 'Manifiesto firmado',
     description: 'Se firmó el manifiesto de la visita; cierra la cadena de custodia.',
