@@ -29,6 +29,7 @@ import { visitAccessMessage } from '../../core/http/visit-access';
             <div class="visit-meta">
               <span class="status" [class]="getStatusClass()">{{ visit.status | label: 'visitStatus' }}</span>
               <span class="urgency">{{ visit.urgency | label: 'visitUrgency' }}</span>
+              <a class="evidence-link" [routerLink]="['/evidence', visit.id]">Ver evidencias</a>
             </div>
           </header>
 
@@ -85,7 +86,9 @@ import { visitAccessMessage } from '../../core/http/visit-access';
     `.error { color: var(--color-error); }`,
     `.expediente-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--color-border); }`,
     `.expediente-header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; }`,
-    `.visit-meta { display: flex; gap: 12px; flex-wrap: wrap; }`,
+    `.visit-meta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }`,
+    `.evidence-link { margin-left: auto; padding: 6px 14px; border: 1px solid var(--color-primary); border-radius: 6px; color: var(--color-primary); font-size: 14px; font-weight: 600; text-decoration: none; }`,
+    `.evidence-link:hover { background: var(--color-primary); color: var(--color-surface); }`,
     `.status, .urgency { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; }`,
     `.status.in_progress { background: var(--color-status-ok-bg); color: var(--color-status-ok); }`,
     `.status.completed { background: var(--color-status-pending-bg); color: var(--color-status-pending); }`,

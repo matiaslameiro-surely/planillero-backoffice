@@ -122,6 +122,28 @@ describe('ExpedienteComponent', () => {
     expect(el.querySelector('a.back-link')).not.toBeNull();
   });
 
+  // --- PLAN-79: acceso al visor de evidencias ---
+
+  it('ofrece «Ver evidencias» hacia el visor de la visita', async () => {
+    configure(visitId);
+    const el = await render();
+
+    const link = el.querySelector<HTMLAnchorElement>('a.evidence-link');
+    expect(link?.textContent?.trim()).toBe('Ver evidencias');
+    expect(link?.getAttribute('href')).toBe(`/evidence/${visitId}`);
+  });
+
+  it('sin acceso a la visita no ofrece «Ver evidencias»', async () => {
+    configure(visitId);
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 403, error: { error: 'outside_jurisdiction' } })),
+    );
+    const el = await render();
+
+    expect(el.querySelector('.error')).not.toBeNull();
+    expect(el.querySelector('a.evidence-link')).toBeNull();
+  });
+
   it('muestra el formulario en solo lectura cuando la visita tiene respuestas', async () => {
     configure(visitId);
     vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(

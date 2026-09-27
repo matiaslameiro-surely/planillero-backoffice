@@ -4,6 +4,7 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -16,6 +17,7 @@ import type {
 } from '../../core/models/evidence.model';
 import { AppDatePipe, LabelPipe, ShortIdPipe } from '../../core/display/display.pipes';
 import { apiErrorCode, visitAccessMessage } from '../../core/http/visit-access';
+import { AuthService } from '../../core/services/auth.service';
 import { EvidenceService } from '../../core/services/evidence.service';
 import { FocusTrap } from '../../shared/directives/focus-trap';
 import { VisitsApiService } from '../../visits/visits-api.service';
@@ -31,6 +33,7 @@ export class EvidenceViewer implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly evidenceService = inject(EvidenceService);
   private readonly visitsApi = inject(VisitsApiService);
+  private readonly auth = inject(AuthService);
 
   protected readonly visitId = signal<string>('');
   /** Código de la visita (el que el supervisor conoce). Vacío hasta que llega, o si no se puede leer. */
@@ -59,6 +62,18 @@ export class EvidenceViewer implements OnInit, OnDestroy {
    * tarjeta del manifiesto: las evidencias que sí cargaron siguen a la vista.
    */
   protected readonly manifestError = signal<string | null>(null);
+  /**
+   * Adónde vuelve el link del encabezado. El supervisor llega desde el expediente y vuelve a él; el
+   * administrador y el operador no pueden abrir el expediente (`supervisorGuard`), así que vuelven
+   * al Panel.
+   */
+  protected readonly backLink = computed(() => {
+    const id = this.visitId();
+    if (id && this.auth.user()?.roles.includes('SUPERVISOR')) {
+      return { route: ['/expediente', id], label: 'Volver al expediente' };
+    }
+    return { route: ['/'], label: 'Volver al Panel' };
+  });
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('visitId') ?? '';
