@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   inject,
   signal,
@@ -26,7 +27,7 @@ import { VisitsApiService } from '../../visits/visits-api.service';
   styleUrl: './evidence-viewer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EvidenceViewer implements OnInit {
+export class EvidenceViewer implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly evidenceService = inject(EvidenceService);
   private readonly visitsApi = inject(VisitsApiService);
@@ -41,6 +42,12 @@ export class EvidenceViewer implements OnInit {
   protected readonly loadingManifest = signal<boolean>(true);
   protected readonly verifying = signal<boolean>(false);
   protected readonly selectedEvidence = signal<EvidenceItem | null>(null);
+  /** URLs locales (blob:) generadas para mostrar cada imagen de forma autenticada. */
+  protected readonly evidenceUrls = signal<Record<string, string>>({});
+  /** Registro de evidencias cuyo binario no se pudo descargar. */
+  protected readonly evidenceErrors = signal<Record<string, boolean>>({});
+  /** Registro de evidencias en proceso de descarga de binario. */
+  protected readonly evidenceLoading = signal<Record<string, boolean>>({});
   /**
    * Por qué no se puede mostrar la visita: sin acceso (403) o inexistente (404). Mientras esté, la
    * pantalla no muestra custodia ni evidencias: sin esto, una visita ajena se veía «pendiente de
@@ -61,7 +68,24 @@ export class EvidenceViewer implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.revokeAllBlobUrls();
+  }
+
+  private revokeAllBlobUrls(): void {
+    const urls = Object.values(this.evidenceUrls());
+    for (const url of urls) {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    }
+    this.evidenceUrls.set({});
+    this.evidenceErrors.set({});
+    this.evidenceLoading.set({});
+  }
+
   protected loadData(id: string): void {
+    this.revokeAllBlobUrls();
     this.loading.set(true);
     this.loadingManifest.set(true);
     this.accessError.set(null);
@@ -76,6 +100,7 @@ export class EvidenceViewer implements OnInit {
       next: (items) => {
         this.evidences.set(items);
         this.loading.set(false);
+        this.loadEvidenceBlobs(id, items);
       },
       // `/evidences` decide el acceso: lo pueden pedir los tres roles, así que su 403 es siempre por
       // jurisdicción o asignación. El 403 del título (`/formulario`) no sirve: al operador se lo
@@ -111,6 +136,25 @@ export class EvidenceViewer implements OnInit {
     });
   }
 
+  private loadEvidenceBlobs(visitId: string, items: EvidenceItem[]): void {
+    for (const item of items) {
+      this.evidenceLoading.update((m) => ({ ...m, [item.id]: true }));
+      this.evidenceService.getEvidenceFileBlob(visitId, item.id).subscribe({
+        next: (blob) => {
+          if (this.visitId() !== visitId) return;
+          const url = URL.createObjectURL(blob);
+          this.evidenceUrls.update((m) => ({ ...m, [item.id]: url }));
+          this.evidenceLoading.update((m) => ({ ...m, [item.id]: false }));
+        },
+        error: () => {
+          if (this.visitId() !== visitId) return;
+          this.evidenceErrors.update((m) => ({ ...m, [item.id]: true }));
+          this.evidenceLoading.update((m) => ({ ...m, [item.id]: false }));
+        },
+      });
+    }
+  }
+
   protected verify(): void {
     const id = this.visitId();
     if (!id) return;
@@ -132,6 +176,18 @@ export class EvidenceViewer implements OnInit {
 
   protected closeSelected(): void {
     this.selectedEvidence.set(null);
+  }
+
+  protected getEvidenceUrl(item: EvidenceItem): string | null {
+    return this.evidenceUrls()[item.id] ?? null;
+  }
+
+  protected hasEvidenceError(item: EvidenceItem): boolean {
+    return Boolean(this.evidenceErrors()[item.id]);
+  }
+
+  protected isEvidenceLoading(item: EvidenceItem): boolean {
+    return Boolean(this.evidenceLoading()[item.id]);
   }
 
   protected getFileUrl(item: EvidenceItem): string {

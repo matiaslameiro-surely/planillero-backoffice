@@ -32,8 +32,12 @@ describe('EvidenceViewer', () => {
   let fixture: ComponentFixture<EvidenceViewer>;
 
   beforeEach(() => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/mock-blob-123');
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+
     const service = {
       getEvidences: vi.fn(() => of([evidencia])),
+      getEvidenceFileBlob: vi.fn(() => of(new Blob(['test-binary'], { type: 'image/jpeg' }))),
       getManifest: vi.fn(() => of(null)),
       verifyManifest: vi.fn(() => of(null)),
       getEvidenceFileUrl: vi.fn(() => '/api/v1/visits/v-100/evidences/ev-1/file'),
@@ -102,6 +106,78 @@ describe('EvidenceViewer', () => {
 
     expect(modal()).toBeNull();
     expect(document.activeElement).toBe(tarjeta());
+  });
+
+  it('descarga el binario como blob y renderiza la imagen con la URL creada en tarjeta y modal', () => {
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    const imgTarjeta: HTMLImageElement | null = fixture.nativeElement.querySelector('.card-preview img');
+    expect(imgTarjeta).not.toBeNull();
+    expect(imgTarjeta?.src).toBe('blob:http://localhost/mock-blob-123');
+
+    abrir();
+    const imgModal: HTMLImageElement | null = modal()!.querySelector('.image-wrapper img');
+    expect(imgModal).not.toBeNull();
+    expect(imgModal?.src).toBe('blob:http://localhost/mock-blob-123');
+  });
+
+  it('libera las URLs blob mediante revokeObjectURL al destruir el componente', () => {
+    fixture.destroy();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/mock-blob-123');
+  });
+});
+
+describe('EvidenceViewer ante error al descargar la imagen de evidencia (PLAN-80)', () => {
+  const evidencia: EvidenceItem = {
+    id: 'ev-1',
+    visitId: 'v-100',
+    evidenceType: 'PHOTO',
+    fileName: 'fachada.jpg',
+    contentType: 'image/jpeg',
+    fileSize: 50000,
+    sha256Hash: 'hash123',
+    capturedAt: '2026-09-18T10:00:00Z',
+    createdAt: '2026-09-18T10:00:01Z',
+  };
+
+  it('muestra un aviso de error en la tarjeta y en el modal en vez de una imagen rota', () => {
+    const service = {
+      getEvidences: vi.fn(() => of([evidencia])),
+      getEvidenceFileBlob: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 401 }))),
+      getManifest: vi.fn(() => of(null)),
+      verifyManifest: vi.fn(() => of(null)),
+      getEvidenceFileUrl: vi.fn(() => '/api/v1/visits/v-100/evidences/ev-1/file'),
+    } as unknown as EvidenceService;
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [EvidenceViewer],
+      providers: [
+        { provide: EvidenceService, useValue: service },
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'v-100' } } },
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EvidenceViewer);
+    fixture.detectChanges();
+
+    const errorTarjeta = fixture.nativeElement.querySelector('.card-preview .image-error');
+    expect(errorTarjeta).not.toBeNull();
+    expect(errorTarjeta?.textContent).toContain('No se pudo cargar la imagen');
+    expect(fixture.nativeElement.querySelector('.card-preview img')).toBeNull();
+
+    // Abrir modal
+    const tarjeta = fixture.nativeElement.querySelector('.evidence-card');
+    tarjeta.click();
+    fixture.detectChanges();
+
+    const errorModal = fixture.nativeElement.querySelector('.image-wrapper .image-error');
+    expect(errorModal).not.toBeNull();
+    expect(errorModal?.textContent).toContain('No se pudo cargar la imagen');
+    expect(fixture.nativeElement.querySelector('.image-wrapper img')).toBeNull();
   });
 });
 

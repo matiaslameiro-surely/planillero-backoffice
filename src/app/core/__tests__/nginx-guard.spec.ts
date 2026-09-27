@@ -43,4 +43,9 @@ describe('Guardia de Configuración NGINX (PLAN-45)', () => {
     expect(content).toMatch(/script-src\s+'self';/);
     expect(content).not.toMatch(/Content-Security-Policy.*script-src\s+[^;]*'unsafe-eval'/);
   });
+
+  it('debe permitir blob: en img-src para la visualización de evidencias periciales (PLAN-80)', () => {
+    const content = fs.readFileSync(nginxConfPath, 'utf-8');
+    expect(content).toMatch(/img-src\s+'self'\s+blob:\s+data:\s+https:\/\/tile\.openstreetmap\.org;/);
+  });
 });

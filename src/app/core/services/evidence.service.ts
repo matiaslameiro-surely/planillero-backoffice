@@ -25,6 +25,14 @@ export class EvidenceService {
     return `${environment.apiUrl}/api/v1/visits/${visitId}/evidences/${evidenceId}/file`;
   }
 
+  /** Descarga el binario de la evidencia como Blob pasando por el interceptor de autenticación. */
+  getEvidenceFileBlob(visitId: string, evidenceId: string): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiUrl}/api/v1/visits/${visitId}/evidences/${evidenceId}/file`,
+      { responseType: 'blob' },
+    );
+  }
+
   /** Obtiene el último manifiesto criptográfico de la visita. */
   getManifest(visitId: string): Observable<VisitManifest> {
     return this.http.get<VisitManifest>(
