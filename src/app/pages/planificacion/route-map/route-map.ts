@@ -16,6 +16,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 import type { Visit } from '../../../core/models/planificacion.model';
+import { escapeHtml } from '../../../core/utils/escape-html';
 
 /**
  * Mapa de visitas sobre OpenStreetMap (Leaflet).
@@ -92,7 +93,7 @@ export class RouteMap implements AfterViewInit, OnChanges, OnDestroy {
     const bounds = this.visits.map((visit) => Leaflet.latLng(visit.latitude, visit.longitude));
     for (const visit of this.visits) {
       Leaflet.marker(Leaflet.latLng(visit.latitude, visit.longitude))
-        .bindPopup(`${visit.code} — ${visit.urgency} — ${visit.address}`)
+        .bindPopup(`${escapeHtml(visit.code)} — ${escapeHtml(visit.urgency)} — ${escapeHtml(visit.address)}`)
         .addTo(this.layer);
     }
     this.markerCount.set(this.visits.length);

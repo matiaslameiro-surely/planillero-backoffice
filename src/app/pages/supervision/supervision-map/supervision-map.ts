@@ -18,6 +18,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 import type { OperatorLiveStatus } from '../../../core/models/supervision.model';
+import { escapeHtml } from '../../../core/utils/escape-html';
 
 /**
  * Mapa Operativo de Supervisión sobre OpenStreetMap (Leaflet).
@@ -110,19 +111,19 @@ export class SupervisionMap implements AfterViewInit, OnChanges, OnDestroy {
 
       const batteryText = op.batteryLevel !== null ? `${Math.round(op.batteryLevel * 100)}%` : 'N/D';
       const visitText = op.activeVisitCode
-        ? `<strong>Visita:</strong> ${op.activeVisitCode} (${op.activeVisitElapsedMinutes ?? 0}m en curso)`
+        ? `<strong>Visita:</strong> ${escapeHtml(op.activeVisitCode)} (${op.activeVisitElapsedMinutes ?? 0}m en curso)`
         : '<em>Sin visita activa</em>';
 
       const popupContent = `
         <div class="supervision-popup">
           <div class="supervision-popup__header">
-            <strong>${op.username}</strong> &bull; <span class="badge status-${op.status.toLowerCase()}">${statusLabel}</span>
+            <strong>${escapeHtml(op.username)}</strong> &bull; <span class="badge status-${escapeHtml(op.status.toLowerCase())}">${statusLabel}</span>
           </div>
           <div class="supervision-popup__body">
             <div><strong>Batería:</strong> ${batteryText}</div>
-            <div><strong>Conexión:</strong> ${op.networkStatus}</div>
+            <div><strong>Conexión:</strong> ${escapeHtml(op.networkStatus)}</div>
             <div>${visitText}</div>
-            ${op.observations ? `<div class="supervision-popup__obs">${op.observations}</div>` : ''}
+            ${op.observations ? `<div class="supervision-popup__obs">${escapeHtml(op.observations)}</div>` : ''}
           </div>
         </div>
       `;
