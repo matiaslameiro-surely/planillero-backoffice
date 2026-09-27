@@ -36,4 +36,11 @@ describe('Guardia de Configuración NGINX (PLAN-45)', () => {
     const content = fs.readFileSync(nginxConfPath, 'utf-8');
     expect(content).toContain('Directivas comunes de proxy: los `location` de abajo las heredan');
   });
+
+  it('no debe incluir unsafe-eval: el backoffice sólo usa el formulario en readonly y ahí no se compilan schemas (PLAN-59)', () => {
+    const content = fs.readFileSync(nginxConfPath, 'utf-8');
+    expect(content).toContain('add_header Content-Security-Policy');
+    expect(content).toMatch(/script-src\s+'self';/);
+    expect(content).not.toMatch(/Content-Security-Policy.*script-src\s+[^;]*'unsafe-eval'/);
+  });
 });
