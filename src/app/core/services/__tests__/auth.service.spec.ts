@@ -116,6 +116,81 @@ describe('AuthService', () => {
     expect(service.status()).toBe('signedOut');
   });
 
+  // PLAN-71: sólo un rechazo del backend (4xx) descarta la sesión; sin red o con 5xx se conserva.
+  for (const status of [502, 503, 0]) {
+    it(`si la restauración falla con ${status || 'error de red'}, conserva la sesión como unreachable`, () => {
+      store.set({ accessToken: 'vencido', refreshToken: 'r1' });
+      let user: SessionUser | null | undefined;
+      service.ensureSession().subscribe((u) => (user = u));
+
+      const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/me`);
+      if (status === 0) {
+        request.error(new ProgressEvent('error'));
+      } else {
+        request.flush({}, { status, statusText: 'Error' });
+      }
+
+      expect(user).toBeNull();
+      expect(store.getRefreshToken()).toBe('r1');
+      expect(service.status()).toBe('unreachable');
+    });
+  }
+
+  it('si la restauración falla con 400, limpia la sesión', () => {
+    store.set({ accessToken: 'vencido', refreshToken: 'r1' });
+    service.ensureSession().subscribe();
+
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush({}, { status: 400, statusText: 'Bad Request' });
+
+    expect(store.getRefreshToken()).toBeNull();
+    expect(service.status()).toBe('signedOut');
+  });
+
+  it('después de unreachable, reintentar con el servidor de vuelta restaura la sesión', () => {
+    store.set({ accessToken: 'vencido', refreshToken: 'r1' });
+    service.ensureSession().subscribe();
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush({}, { status: 502, statusText: 'Bad Gateway' });
+
+    let user: SessionUser | null | undefined;
+    service.ensureSession().subscribe((u) => (user = u));
+    httpMock.expectOne(`${apiUrl}/api/v1/auth/me`).flush(me);
+
+    expect(user).toEqual(me);
+    expect(service.status()).toBe('signedIn');
+  });
+
+  for (const status of [401, 400]) {
+    it(`si el refresh responde ${status}, descarta la sesión`, () => {
+      store.set({ accessToken: 'viejo', refreshToken: 'r1' });
+      let failed = false;
+      service.refresh().subscribe({ error: () => (failed = true) });
+
+      httpMock.expectOne(`${apiUrl}/api/v1/auth/refresh`).flush({}, { status, statusText: 'Error' });
+
+      expect(failed).toBe(true);
+      expect(store.getRefreshToken()).toBeNull();
+      expect(service.status()).toBe('signedOut');
+    });
+  }
+
+  for (const status of [502, 503, 0]) {
+    it(`si el refresh falla con ${status || 'error de red'}, propaga el error y conserva la sesión`, () => {
+      store.set({ accessToken: 'viejo', refreshToken: 'r1' });
+      let failed = false;
+      service.refresh().subscribe({ error: () => (failed = true) });
+
+      const request = httpMock.expectOne(`${apiUrl}/api/v1/auth/refresh`);
+      if (status === 0) {
+        request.error(new ProgressEvent('error'));
+      } else {
+        request.flush({}, { status, statusText: 'Error' });
+      }
+
+      expect(failed).toBe(true);
+      expect(store.getRefreshToken()).toBe('r1');
+    });
+  }
+
   it('renueva la sesión y guarda los tokens nuevos', () => {
     store.set({ accessToken: 'viejo', refreshToken: 'r1' });
     let tokens: Tokens | undefined;

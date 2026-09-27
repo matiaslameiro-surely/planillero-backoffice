@@ -45,6 +45,12 @@ export const routes: Routes = [
       import('./pages/access-denied/access-denied').then((m) => m.AccessDenied),
   },
   {
+    // Sin guarda: se llega acá justamente cuando no se pudo verificar la sesión.
+    path: 'sin-conexion',
+    loadComponent: () =>
+      import('./pages/server-unavailable/server-unavailable').then((m) => m.ServerUnavailable),
+  },
+  {
     path: 'evidence/:visitId',
     canActivate: [authenticatedGuard],
     loadComponent: () =>

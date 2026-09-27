@@ -1,0 +1,15 @@
+<div class="unavailable">
+  <h1 class="unavailable__title">Sin conexión con el servidor</h1>
+  <p class="unavailable__text">
+    No pudimos comunicarnos con el servidor. Tu sesión sigue guardada: cuando vuelva, podés
+    retomar donde estabas sin iniciar sesión de nuevo.
+  </p>
+  <button type="button" class="unavailable__button" [disabled]="retrying()" (click)="retry()">
+    {{ retrying() ? 'Reintentando…' : 'Reintentar' }}
+  </button>
+  <p class="unavailable__status" role="status">
+    @if (stillUnavailable()) {
+      El servidor sigue sin responder. Probá de nuevo en unos minutos.
+    }
+  </p>
+</div>

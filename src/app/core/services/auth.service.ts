@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import {
   Observable,
@@ -16,8 +16,21 @@ import { environment } from '../../environments/environment';
 import type { LoginResult, SessionUser, Tokens } from '../models/auth.model';
 import { TokenStoreService } from './token-store.service';
 
-/** Estado de la sesión. `loading` es el arranque, mientras se intenta restaurar la sesión guardada. */
-export type SessionStatus = 'loading' | 'signedOut' | 'signedIn';
+/**
+ * Estado de la sesión. `loading` es el arranque, mientras se intenta restaurar la sesión guardada.
+ * `unreachable` significa que hay una sesión guardada pero el servidor no respondió al restaurarla:
+ * no se sabe todavía si es válida, así que no se descarta.
+ */
+export type SessionStatus = 'loading' | 'signedOut' | 'signedIn' | 'unreachable';
+
+/**
+ * Indica si un error significa que el servidor no está disponible (sin red o 5xx), a diferencia de
+ * un rechazo de la sesión (4xx). Sólo el rechazo justifica borrar el refresh token: lo otro puede
+ * resolverse solo cuando el servidor vuelva.
+ */
+export function isServerUnavailable(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500);
+}
 
 /** Respuesta cruda de `POST /api/v1/auth/login`. */
 interface LoginResponse {
@@ -86,7 +99,8 @@ export class AuthService {
    * Restaura la sesión si hace falta y devuelve el usuario.
    *
    * Es lo que usan las guardas: al entrar a una ruta protegida, si todavía no hay usuario intenta
-   * `GET /api/v1/auth/me` con el refresh token guardado.
+   * `GET /api/v1/auth/me` con el refresh token guardado. Si el servidor no responde, devuelve `null`
+   * con el estado en `unreachable` y conserva el refresh token para reintentar.
    */
   ensureSession(): Observable<SessionUser | null> {
     if (this.status() === 'signedIn') {
@@ -98,8 +112,12 @@ export class AuthService {
     }
     if (!this.restoreInFlight$) {
       this.restoreInFlight$ = this.fetchUser().pipe(
-        catchError(() => {
-          this.clearSession();
+        catchError((error: unknown) => {
+          if (isServerUnavailable(error)) {
+            this.status.set('unreachable');
+          } else {
+            this.clearSession();
+          }
           return of(null);
         }),
         finalize(() => {
@@ -116,6 +134,7 @@ export class AuthService {
    *
    * Comparte una sola petición entre todos los que la pidan a la vez: si varias respuestas llegan
    * con 401 al mismo tiempo, se golpea `/api/v1/auth/refresh` una vez y no una por request.
+   * Sólo descarta la sesión si el backend la rechaza; si no responde, el error se propaga sin tocarla.
    */
   refresh(): Observable<Tokens> {
     if (!this.refreshInFlight$) {
@@ -129,7 +148,9 @@ export class AuthService {
         .pipe(
           tap((tokens) => this.store.set(tokens)),
           catchError((error: unknown) => {
-            this.clearSession();
+            if (!isServerUnavailable(error)) {
+              this.clearSession();
+            }
             return throwError(() => error);
           }),
           finalize(() => {
