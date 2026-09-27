@@ -33,9 +33,13 @@
 .status-intact::before{content:'✓ '}
 .evidence-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .evidence-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;overflow:hidden;cursor:pointer}
-.card-preview{height:160px;background:var(--color-surface-subtle);position:relative}
-.card-preview img,.image-wrapper img{width:100%;object-fit:contain}
+.card-preview{height:160px;background:var(--color-surface-subtle);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card-preview img,.image-wrapper img{width:100%;height:100%;object-fit:contain}
+.image-wrapper{display:flex;align-items:center;justify-content:center;min-height:200px;max-height:320px;background:var(--color-surface-subtle);border-radius:6px;overflow:hidden}
 .image-wrapper img{max-height:320px}
+.image-error,.image-loading{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;height:100%;padding:12px;box-sizing:border-box;font-size:12px;font-weight:600}
+.image-error{background:var(--color-status-alert-bg);color:var(--color-status-alert)}
+.image-loading{background:var(--color-surface-subtle);color:var(--color-text-muted)}
 .signature-tag{position:absolute;top:6px;right:6px;background:var(--color-overlay-strong);color:var(--color-surface);font-size:$font-size-min;font-weight:700;padding:3px 6px;border-radius:4px}
 .card-body{padding:10px 12px}
 .type-badge{font-size:$font-size-glance;font-weight:700;color:var(--color-primary)}

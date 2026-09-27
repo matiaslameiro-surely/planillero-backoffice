@@ -163,11 +163,21 @@
               @if (item.evidenceType === 'SIGNATURE') {
                 <div class="signature-tag">FIRMA OLÓGRAFA</div>
               }
-              <img
-                [src]="getFileUrl(item)"
-                [alt]="item.fileName || 'Evidencia pericial'"
-                loading="lazy"
-              />
+              @if (getEvidenceUrl(item); as url) {
+                <img
+                  [src]="url"
+                  [alt]="item.fileName || 'Evidencia pericial'"
+                  loading="lazy"
+                />
+              } @else if (hasEvidenceError(item)) {
+                <div class="image-error" role="status">
+                  <span>⚠️ No se pudo cargar la imagen</span>
+                </div>
+              } @else {
+                <div class="image-loading" role="status">
+                  <span>Cargando imagen...</span>
+                </div>
+              }
             </div>
 
             <div class="card-body">
@@ -228,7 +238,17 @@
 
         <div class="lightbox-content">
           <div class="image-wrapper">
-            <img [src]="getFileUrl(sel)" [alt]="sel.fileName" />
+            @if (getEvidenceUrl(sel); as url) {
+              <img [src]="url" [alt]="sel.fileName" />
+            } @else if (hasEvidenceError(sel)) {
+              <div class="image-error" role="status">
+                <span>⚠️ No se pudo cargar la imagen</span>
+              </div>
+            } @else {
+              <div class="image-loading" role="status">
+                <span>Cargando imagen...</span>
+              </div>
+            }
           </div>
 
           <div class="evidence-metadata-panel">

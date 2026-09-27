@@ -110,4 +110,20 @@ describe('EvidenceService', () => {
       `${environment.apiUrl}/api/v1/visits/v-100/evidences/ev-1/file`,
     );
   });
+
+  it('getEvidenceFileBlob consulta GET /api/v1/visits/:visitId/evidences/:evidenceId/file con responseType blob', () => {
+    const mockBlob = new Blob(['fake-image-content'], { type: 'image/jpeg' });
+    let result: Blob | undefined;
+
+    service.getEvidenceFileBlob('v-100', 'ev-1').subscribe((b) => (result = b));
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}/api/v1/visits/v-100/evidences/ev-1/file`,
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(mockBlob);
+
+    expect(result).toEqual(mockBlob);
+  });
 });
