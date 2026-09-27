@@ -73,6 +73,7 @@ describe('Auditoria', () => {
       'VISIT_STARTED',
       'FORM_SUBMITTED',
       'EVIDENCE_SAVED',
+      'VISIT_COMPLETED',
       'MANIFEST_SIGNED',
     ]);
 
@@ -170,6 +171,19 @@ describe('Auditoria', () => {
 
     const options: NodeListOf<HTMLOptionElement> = fixture.nativeElement.querySelectorAll('select option');
     options.forEach((option) => expect(option.textContent).not.toMatch(/\([A-Z_]+\)/));
+  });
+
+  it('traduce el evento de visita completada que emite el backend (PLAN-70)', () => {
+    vi.mocked(service.getLogs).mockReturnValue(
+      of({ ...page, content: [{ ...entry, eventType: 'VISIT_COMPLETED' }] }),
+    );
+    create();
+
+    const badge: HTMLElement = fixture.nativeElement.querySelector('.auditoria__badge');
+    expect(badge.textContent?.trim()).toBe('Visita completada');
+    expect(badge.classList).toContain('auditoria__badge--success');
+    expect(badge.title).toContain('finalizó la visita');
+    expect(badge.title).not.toContain('sin descripción registrada');
   });
 
   it('muestra un código de evento desconocido sin romper la grilla', () => {
