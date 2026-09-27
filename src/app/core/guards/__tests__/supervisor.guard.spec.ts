@@ -26,7 +26,7 @@ describe('supervisorGuard', () => {
   function runGuard(user: SessionUser | null): GuardResult | undefined {
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthService, useValue: { ensureSession: () => of(user) } },
+        { provide: AuthService, useValue: { ensureSession: () => of(user), status: () => 'signedOut' } },
         provideRouter([]),
       ],
     });
