@@ -48,4 +48,12 @@ describe('Guardia de layout', () => {
 
     expect(conMain).toEqual(['app.html']);
   });
+
+  it('las grillas de datos de planificación y auditoría contienen el desborde horizontal (PLAN-73)', () => {
+    const auditoriaScss = fs.readFileSync(path.join(root, 'src/app/pages/auditoria/auditoria.scss'), 'utf8');
+    const planificacionScss = fs.readFileSync(path.join(root, 'src/app/pages/planificacion/planificacion.scss'), 'utf8');
+
+    expect(auditoriaScss).toMatch(/&__grid\s*\{[^}]*overflow-x:\s*auto/);
+    expect(planificacionScss).toMatch(/&__grid\s*\{[^}]*overflow-x:\s*auto/);
+  });
 });

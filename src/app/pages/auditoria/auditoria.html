@@ -17,6 +17,7 @@
           type="text"
           [value]="verifyVisitId()"
           (input)="onVerifyVisitIdChange($event)"
+          (keydown.enter)="verifyIntegrity()"
           placeholder="Ej.: V-1001"
           aria-label="ID o código de visita a auditar" />
       </label>
