@@ -337,6 +337,61 @@ describe('Componentes de campo del formulario dinámico (PLAN-60)', () => {
     );
   });
 
+  describe('El interruptor sí/no tiene nombre accesible (PLAN-72)', () => {
+    /** Resuelve el texto de los elementos a los que apunta un atributo aria-*by, como un lector. */
+    function textoReferido(el: HTMLElement, input: HTMLInputElement, atributo: string): string {
+      const ids = input.getAttribute(atributo)?.split(' ') ?? [];
+      return ids
+        .map((id) => el.querySelector<HTMLElement>(`[id="${id}"]`))
+        .map((ref) => {
+          if (!ref) return '';
+          const copia = ref.cloneNode(true) as HTMLElement;
+          copia.querySelectorAll('[aria-hidden="true"]').forEach((oculto) => oculto.remove());
+          return copia.textContent?.trim() ?? '';
+        })
+        .join(' ');
+    }
+
+    it('el checkbox se nombra con el texto del campo, sin el asterisco, y lleva la descripción', () => {
+      const { el } = montar(FieldBooleanComponent, {
+        name: 'requiereSeguimiento',
+        schema: SCHEMA_BOOL,
+        label: 'Requiere seguimiento',
+        description: 'Marcar si hay que volver a la visita.',
+        required: true,
+      });
+      const input = el.querySelector('input[type="checkbox"]') as HTMLInputElement;
+
+      expect(textoReferido(el, input, 'aria-labelledby')).toBe('Requiere seguimiento');
+      expect(textoReferido(el, input, 'aria-describedby')).toBe('Marcar si hay que volver a la visita.');
+      expect(input.getAttribute('aria-required')).toBe('true');
+    });
+
+    it('sin descripción no apunta a un elemento inexistente, y en solo lectura no se anuncia obligatorio', () => {
+      const { el } = montar(FieldBooleanComponent, {
+        name: 'conforme',
+        schema: SCHEMA_BOOL,
+        label: 'Conforme',
+        required: true,
+        readonly: true,
+      });
+      const input = el.querySelector('input[type="checkbox"]') as HTMLInputElement;
+
+      expect(textoReferido(el, input, 'aria-labelledby')).toBe('Conforme');
+      expect(input.hasAttribute('aria-describedby')).toBe(false);
+      expect(input.hasAttribute('aria-required')).toBe(false);
+    });
+
+    it('dos interruptores en el mismo formulario no comparten ids', () => {
+      const a = montar(FieldBooleanComponent, { name: 'a', schema: SCHEMA_BOOL, label: 'A' });
+      const idA = a.el.querySelector('input')!.getAttribute('aria-labelledby');
+      const b = montar(FieldBooleanComponent, { name: 'b', schema: SCHEMA_BOOL, label: 'B' });
+      const idB = b.el.querySelector('input')!.getAttribute('aria-labelledby');
+
+      expect(idA).not.toBe(idB);
+    });
+  });
+
   describe('El contrato no pisa la validación en modo edit', () => {
     it('el campo de texto sigue emitiendo su valor cuando es editable', () => {
       const { fixture, el } = montar(FieldTextComponent, { name: 'nota', schema: SCHEMA_MAXLONG });

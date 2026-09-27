@@ -12,19 +12,24 @@ import { READONLY_ATTRIBUTE, READONLY_STYLES } from './readonly-contract';
     <div class="field-container" [attr.${READONLY_ATTRIBUTE}]="readonly() ? '' : null">
       <div class="boolean-row">
         <div class="label-wrapper">
-          <span class="field-label">
+          <!-- El texto está fuera del <label> por el diseño (texto a la izquierda, interruptor a la
+               derecha); aria-labelledby lo vincula al checkbox para que el lector lo anuncie. -->
+          <span class="field-label" [id]="labelId">
             {{ label() }}
             @if (required() && !readonly()) {
-              <span class="required"> *</span>
+              <span class="required" aria-hidden="true"> *</span>
             }
           </span>
           @if (description()) {
-            <p class="field-description">{{ description() }}</p>
+            <p class="field-description" [id]="descriptionId">{{ description() }}</p>
           }
         </div>
         <label class="switch-label" [for]="checkboxId">
           <input
             [id]="checkboxId"
+            [attr.aria-labelledby]="labelId"
+            [attr.aria-describedby]="description() ? descriptionId : null"
+            [attr.aria-required]="required() && !readonly() ? 'true' : null"
             type="checkbox"
             [checked]="value() ?? false"
             (change)="onChange($event)"
@@ -93,6 +98,8 @@ export class FieldBooleanComponent {
   required = input<boolean>(false);
 
   protected checkboxId = `field-boolean-${crypto.randomUUID().slice(0, 8)}`;
+  protected labelId = `${this.checkboxId}-label`;
+  protected descriptionId = `${this.checkboxId}-description`;
 
   protected onChange(event: Event): void {
     if (this.readonly()) {
