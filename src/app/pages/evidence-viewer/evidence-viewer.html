@@ -1,6 +1,6 @@
 <div class="evidence-page">
   <header class="page-header">
-    <a routerLink="/" class="back-link">← Volver al Panel</a>
+    <a [routerLink]="backLink().route" class="back-link">← {{ backLink().label }}</a>
     <div class="header-content">
       <h1>Supervisión de Evidencias Digitales</h1>
       <span class="visit-badge" [title]="visitId()">Visita: {{ visitCode() || (visitId() | shortId) }}</span>

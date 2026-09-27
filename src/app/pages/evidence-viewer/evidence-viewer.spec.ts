@@ -1,13 +1,22 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { SessionUser } from '../../core/models/auth.model';
 import type { EvidenceItem } from '../../core/models/evidence.model';
+import { AuthService } from '../../core/services/auth.service';
 import { EvidenceService } from '../../core/services/evidence.service';
 import { VisitsApiService } from '../../visits/visits-api.service';
 import { EvidenceViewer } from './evidence-viewer';
+
+/** Sesión falsa: el visor sólo lee el usuario para decidir adónde vuelve el link del encabezado. */
+function authCon(roles: string[] | null) {
+  const user = roles ? { username: 'usuario.ficticio', roles, twoFactorEnabled: false } : null;
+  return { provide: AuthService, useValue: { user: signal<SessionUser | null>(user) } };
+}
 
 /**
  * Tests del visor de evidencias, centrados en el modal de inspección.
@@ -46,6 +55,7 @@ describe('EvidenceViewer', () => {
     TestBed.configureTestingModule({
       imports: [EvidenceViewer],
       providers: [
+        authCon(null),
         { provide: EvidenceService, useValue: service },
         provideRouter([]),
         {
@@ -152,6 +162,7 @@ describe('EvidenceViewer ante error al descargar la imagen de evidencia (PLAN-80
     TestBed.configureTestingModule({
       imports: [EvidenceViewer],
       providers: [
+        authCon(null),
         { provide: EvidenceService, useValue: service },
         provideRouter([]),
         {
@@ -197,6 +208,7 @@ describe('EvidenceViewer ante visitas sin acceso o inexistentes', () => {
     TestBed.configureTestingModule({
       imports: [EvidenceViewer],
       providers: [
+        authCon(null),
         { provide: EvidenceService, useValue: service },
         { provide: VisitsApiService, useValue: visitsApi },
         provideRouter([]),
@@ -280,5 +292,49 @@ describe('EvidenceViewer ante visitas sin acceso o inexistentes', () => {
 
     expect(el.querySelector('.access-error')?.textContent).toContain('No tenés acceso a esta visita.');
     expect(el.querySelector('.gallery-section')).toBeNull();
+  });
+});
+
+describe('EvidenceViewer: link para volver según el rol (PLAN-79)', () => {
+  function render(roles: string[]): HTMLAnchorElement {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [EvidenceViewer],
+      providers: [
+        authCon(roles),
+        {
+          provide: EvidenceService,
+          useValue: {
+            getEvidences: () => of([]),
+            getEvidenceFileBlob: () => of(new Blob()),
+            getManifest: () => of(null),
+          },
+        },
+        { provide: VisitsApiService, useValue: { getVisitWithForm: () => of({ code: 'V-9001' }) } },
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'v-100' } } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(EvidenceViewer);
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('.back-link');
+  }
+
+  it('un supervisor vuelve al expediente de la visita', () => {
+    const link = render(['SUPERVISOR']);
+    expect(link.textContent).toContain('Volver al expediente');
+    expect(link.getAttribute('href')).toBe('/expediente/v-100');
+  });
+
+  it('un administrador, que no puede abrir el expediente, vuelve al Panel', () => {
+    const link = render(['ADMINISTRATOR']);
+    expect(link.textContent).toContain('Volver al Panel');
+    expect(link.getAttribute('href')).toBe('/');
+  });
+
+  it('un operador vuelve al Panel', () => {
+    const link = render(['OPERATOR']);
+    expect(link.textContent).toContain('Volver al Panel');
+    expect(link.getAttribute('href')).toBe('/');
   });
 });
