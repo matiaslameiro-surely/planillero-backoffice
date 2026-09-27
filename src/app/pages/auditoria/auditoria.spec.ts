@@ -231,6 +231,23 @@ describe('Auditoria', () => {
     expect(result.textContent).toContain('El hash no coincide.');
   });
 
+  it('audita la integridad al presionar Enter en el campo de visita (PLAN-73)', () => {
+    create();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      'input[aria-label="ID o código de visita a auditar"]',
+    );
+    input.value = 'V-1001';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(vi.mocked(service.verify)).toHaveBeenCalledWith('V-1001');
+    expect(fixture.nativeElement.querySelector('.auditoria__verify-result--ok').textContent).toContain(
+      'Cadena íntegra',
+    );
+  });
+
   // --- PLAN-46 ---
 
   it('identifica la visita por su código y ofrece copiar el UUID completo', async () => {

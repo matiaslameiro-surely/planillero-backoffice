@@ -97,7 +97,13 @@ export class Login {
 function messageOf(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     const body = error.error as { message?: string } | null;
-    return body?.message ?? `No se pudo completar la operación (${error.status}).`;
+    if (body?.message) {
+      return body.message;
+    }
+    if (error.status === 0 || error.status === 502 || error.status === 503 || error.status === 504) {
+      return 'No se puede conectar con el servidor. Probá de nuevo en unos minutos.';
+    }
+    return `No se pudo completar la operación (${error.status}).`;
   }
   if (error instanceof Error && error.message) {
     return error.message;
