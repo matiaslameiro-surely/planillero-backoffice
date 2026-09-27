@@ -1,10 +1,12 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { EvidenceItem } from '../../core/models/evidence.model';
 import { EvidenceService } from '../../core/services/evidence.service';
+import { VisitsApiService } from '../../visits/visits-api.service';
 import { EvidenceViewer } from './evidence-viewer';
 
 /**
@@ -100,5 +102,107 @@ describe('EvidenceViewer', () => {
 
     expect(modal()).toBeNull();
     expect(document.activeElement).toBe(tarjeta());
+  });
+});
+
+/**
+ * PLAN-63: una visita ajena o inexistente no se muestra como «pendiente de sellado» y vacía.
+ *
+ * `/evidences` decide el acceso porque lo pueden pedir los tres roles; el 403 del título
+ * (`/formulario`) no cuenta, porque al operador se lo devuelve su rol aunque la visita sea suya.
+ */
+describe('EvidenceViewer ante visitas sin acceso o inexistentes', () => {
+  const http = (status: number, code: string) => new HttpErrorResponse({ status, error: { error: code } });
+
+  let service: EvidenceService;
+  let visitsApi: VisitsApiService;
+
+  function crear(): HTMLElement {
+    TestBed.configureTestingModule({
+      imports: [EvidenceViewer],
+      providers: [
+        { provide: EvidenceService, useValue: service },
+        { provide: VisitsApiService, useValue: visitsApi },
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'v-200' } } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(EvidenceViewer);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    service = {
+      getEvidences: vi.fn(() => of([])),
+      getManifest: vi.fn(() => throwError(() => http(404, 'manifest_not_found'))),
+      verifyManifest: vi.fn(),
+      getEvidenceFileUrl: vi.fn(() => ''),
+    } as unknown as EvidenceService;
+    visitsApi = {
+      getVisitWithForm: vi.fn(() => of({ code: 'V-2001' })),
+    } as unknown as VisitsApiService;
+  });
+
+  it('ante un 403 dice que no tenés acceso y no muestra custodia ni evidencias', () => {
+    vi.mocked(service.getEvidences).mockReturnValue(throwError(() => http(403, 'outside_jurisdiction')));
+    vi.mocked(service.getManifest).mockReturnValue(throwError(() => http(403, 'outside_jurisdiction')));
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(throwError(() => http(403, 'outside_jurisdiction')));
+    const el = crear();
+
+    expect(el.querySelector('.access-error')?.textContent).toContain('No tenés acceso a esta visita.');
+    expect(el.textContent).not.toContain('PENDIENTE DE SELLADO');
+    expect(el.querySelector('.manifest-card')).toBeNull();
+    expect(el.querySelector('.gallery-section')).toBeNull();
+    expect(el.querySelector('.verify-btn')).toBeNull();
+    expect(el.querySelector('a.back-link')).not.toBeNull();
+  });
+
+  it('ante un 404 dice que la visita no existe', () => {
+    vi.mocked(service.getEvidences).mockReturnValue(throwError(() => http(404, 'visit_not_found')));
+    vi.mocked(service.getManifest).mockReturnValue(throwError(() => http(404, 'visit_not_found')));
+    const el = crear();
+
+    expect(el.querySelector('.access-error')?.textContent).toContain('La visita no existe.');
+    expect(el.querySelector('.manifest-card')).toBeNull();
+  });
+
+  it('una visita accesible sin manifiesto sigue «pendiente de sellado»', () => {
+    const el = crear();
+
+    expect(el.querySelector('.access-error')).toBeNull();
+    expect(el.textContent).toContain('PENDIENTE DE SELLADO');
+    expect(el.querySelector('.gallery-section')).not.toBeNull();
+  });
+
+  it('el 403 del título (operador sin permiso sobre /formulario) no cuenta como «sin acceso»', () => {
+    vi.mocked(visitsApi.getVisitWithForm).mockReturnValue(throwError(() => http(403, 'forbidden')));
+    const el = crear();
+
+    expect(el.querySelector('.access-error')).toBeNull();
+    expect(el.querySelector('.manifest-card')).not.toBeNull();
+    expect(el.querySelector('.gallery-section')).not.toBeNull();
+  });
+
+  it('un error del manifiesto que no es «no hay manifiesto» se dice en su tarjeta y no tapa la galería', () => {
+    vi.mocked(service.getManifest).mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    const el = crear();
+
+    expect(el.textContent).not.toContain('PENDIENTE DE SELLADO');
+    expect(el.querySelector('.access-error')).toBeNull();
+    expect(el.querySelector('.manifest-card .manifest-error')?.textContent).toContain(
+      'No se pudo consultar el sellado de la visita.',
+    );
+    expect(el.querySelector('.manifest-card .status-error')?.textContent).toContain('SELLADO NO DISPONIBLE');
+    expect(el.querySelector('.gallery-section')).not.toBeNull();
+  });
+
+  it('un 403 del manifiesto sí hace inaccesible la visita', () => {
+    vi.mocked(service.getManifest).mockReturnValue(throwError(() => http(403, 'outside_jurisdiction')));
+    const el = crear();
+
+    expect(el.querySelector('.access-error')?.textContent).toContain('No tenés acceso a esta visita.');
+    expect(el.querySelector('.gallery-section')).toBeNull();
   });
 });

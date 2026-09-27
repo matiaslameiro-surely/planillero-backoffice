@@ -7,6 +7,10 @@
     </div>
   </header>
 
+  @if (accessError(); as message) {
+    <!-- Sin acceso o inexistente: no se muestra custodia ni evidencias, que serían información falsa. -->
+    <p class="access-error" role="alert">{{ message }}</p>
+  } @else {
   <!-- Panel de Auditoría y Manifiesto Criptográfico -->
   <section class="manifest-card">
     <div class="manifest-header">
@@ -14,6 +18,8 @@
         <h2>Cadena de Custodia y Peritaje</h2>
         @if (loadingManifest()) {
           <span class="status-pill status-loading">CONSULTANDO MANIFIESTO...</span>
+        } @else if (manifestError()) {
+          <span class="status-pill status-error">SELLADO NO DISPONIBLE</span>
         } @else if (manifest(); as m) {
           <span
             class="status-pill"
@@ -36,6 +42,10 @@
       </button>
     </div>
 
+    @if (manifestError(); as message) {
+    <!-- Error del manifiesto: se dice acá, sin disfrazarlo de pendiente ni tapar la galería. -->
+    <p class="manifest-error" role="alert">{{ message }}</p>
+    } @else {
     <!-- Veredicto pericial prioritario: responde primero la pregunta esencial -->
     <div
       class="peritaje-verdict"
@@ -82,6 +92,7 @@
         </div>
       </div>
     </div>
+    }
 
     <!-- Diagnóstico de Verificación pericial activa -->
     @if (verification(); as v) {
@@ -177,6 +188,8 @@
       </div>
     }
   </section>
+
+  }
 
   <!-- Modal / Visor de inspección pericial -->
   @if (selectedEvidence(); as sel) {
