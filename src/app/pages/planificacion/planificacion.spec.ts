@@ -77,23 +77,41 @@ describe('Planificacion', () => {
     urgency: 'LOW',
   };
 
-  const hoja: RouteSheet = {
-    operatorId: operator.id,
-    operatorUsername: operator.username,
-    date: new Date().toISOString().slice(0, 10),
-    items: [{ position: 1, visit: pendiente }],
-  };
+  /** Fecha de hoy en `YYYY-MM-DD` (la del reloj local del supervisor, igual que el componente). */
+  function todayIso(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  }
 
+  let hoja: RouteSheet;
   /**
    * Hoja del día sin visitas. Es la respuesta por defecto: con `hoja`, V-1001 ya estaría asignada al
    * operador y la pantalla no ofrecería asignarla (PLAN-42).
    */
-  const hojaVacia: RouteSheet = { ...hoja, items: [] };
+  let hojaVacia: RouteSheet;
 
   let fixture: ComponentFixture<Planificacion>;
   let service: PlanificacionService;
 
   beforeEach(() => {
+    hoja = {
+      operatorId: operator.id,
+      operatorUsername: operator.username,
+      get date(): string {
+        return todayIso();
+      },
+      items: [{ position: 1, visit: pendiente }],
+    };
+    hojaVacia = {
+      ...hoja,
+      get date(): string {
+        return todayIso();
+      },
+      items: [],
+    };
+
     service = {
       getOperators: vi.fn(() => of([operator])),
       getVisits: vi.fn(() => of([pendiente])),
@@ -320,13 +338,7 @@ describe('Planificacion', () => {
 
     // El piso es el día del supervisor, no el de UTC: comparar contra `toISOString()` haría fallar
     // el test todas las noches, en la franja en que el huso local y el UTC ya no coinciden.
-    const hoyLocal = new Date();
-    const esperado = [
-      hoyLocal.getFullYear(),
-      String(hoyLocal.getMonth() + 1).padStart(2, '0'),
-      String(hoyLocal.getDate()).padStart(2, '0'),
-    ].join('-');
-    expect(dateInput().getAttribute('min')).toBe(esperado);
+    expect(dateInput().getAttribute('min')).toBe(todayIso());
   });
 
   it('con una fecha ya transcurrida la confirmacion lo advierte', () => {
@@ -628,6 +640,28 @@ describe('Planificacion', () => {
 
       expect(actionCell().querySelector('button')?.textContent).toContain('Asignar');
       expect(firstCheckbox()!.disabled).toBe(false);
+    });
+
+    it('funciona de noche cuando la fecha local y la UTC difieren (PLAN-69)', () => {
+      // En Argentina (UTC-3), entre las 21:00 y la medianoche la fecha local y la UTC son distintas.
+      // Si el stub usara toISOString(), date sería el día siguiente mientras que el componente
+      // trabaja con la fecha local, dejando currentSheetIds vacío.
+      vi.useFakeTimers();
+      const noche = new Date(2026, 8, 25, 23, 30, 0);
+      vi.setSystemTime(noche);
+
+      try {
+        expect(todayIso()).toBe('2026-09-25');
+        vi.mocked(service.getRouteSheet).mockReturnValue(of(hoja));
+        create();
+        elegirOperador();
+
+        expect(actionCell().querySelector('button')).toBeNull();
+        expect(actionCell().textContent).toContain('Ya en su hoja');
+        expect(firstCheckbox()!.disabled).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });
