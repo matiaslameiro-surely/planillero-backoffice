@@ -33,7 +33,7 @@ describe('EvidenceViewer', () => {
 
   beforeEach(() => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/mock-blob-123');
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
 
     const service = {
       getEvidences: vi.fn(() => of([evidencia])),
