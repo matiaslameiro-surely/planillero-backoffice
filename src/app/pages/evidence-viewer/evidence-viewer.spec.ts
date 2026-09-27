@@ -30,14 +30,10 @@ describe('EvidenceViewer', () => {
   };
 
   let fixture: ComponentFixture<EvidenceViewer>;
-  let createObjectURLSpy: ReturnType<typeof vi.fn>;
-  let revokeObjectURLSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    createObjectURLSpy = vi.fn(() => 'blob:http://localhost/mock-blob-123');
-    revokeObjectURLSpy = vi.fn();
-    globalThis.URL.createObjectURL = createObjectURLSpy;
-    globalThis.URL.revokeObjectURL = revokeObjectURLSpy;
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://localhost/mock-blob-123');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     const service = {
       getEvidences: vi.fn(() => of([evidencia])),
@@ -113,7 +109,7 @@ describe('EvidenceViewer', () => {
   });
 
   it('descarga el binario como blob y renderiza la imagen con la URL creada en tarjeta y modal', () => {
-    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalled();
     const imgTarjeta: HTMLImageElement | null = fixture.nativeElement.querySelector('.card-preview img');
     expect(imgTarjeta).not.toBeNull();
     expect(imgTarjeta?.src).toBe('blob:http://localhost/mock-blob-123');
@@ -126,7 +122,7 @@ describe('EvidenceViewer', () => {
 
   it('libera las URLs blob mediante revokeObjectURL al destruir el componente', () => {
     fixture.destroy();
-    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:http://localhost/mock-blob-123');
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/mock-blob-123');
   });
 });
 
