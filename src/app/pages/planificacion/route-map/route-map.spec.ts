@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const bindPopupSpy = vi.fn().mockReturnThis();
+
 vi.mock('leaflet', () => {
   const tileLayer = vi.fn(() => ({ addTo: vi.fn().mockReturnThis() }));
   const layerGroup = vi.fn(() => ({ addTo: vi.fn().mockReturnThis(), clearLayers: vi.fn() }));
   const latLng = vi.fn((lat: number, lng: number) => ({ lat, lng }));
   const latLngBounds = vi.fn(() => ({}));
   const marker = vi.fn(() => ({
-    bindPopup: vi.fn().mockReturnThis(),
+    bindPopup: bindPopupSpy,
     addTo: vi.fn().mockReturnThis(),
   }));
   const map = vi.fn(() => ({
@@ -55,6 +57,7 @@ describe('RouteMap', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    bindPopupSpy.mockClear();
   });
 
   async function setup(visits: Visit[]): Promise<ComponentFixture<RouteMap>> {
@@ -110,5 +113,20 @@ describe('RouteMap', () => {
 
     empty = fixture.nativeElement.querySelector('.route-map__empty');
     expect(empty).toBeNull();
+  });
+
+  it('escapa contenido HTML en el popup de la visita', async () => {
+    const visitaConHtml: Visit = {
+      ...visita,
+      code: 'V-<1001>',
+      urgency: 'HIGH',
+      address: 'Calle <script>alert(1)</script> 123 & "Piso 2"',
+    };
+
+    await setup([visitaConHtml]);
+
+    expect(bindPopupSpy).toHaveBeenCalledWith(
+      'V-&lt;1001&gt; — HIGH — Calle &lt;script&gt;alert(1)&lt;/script&gt; 123 &amp; &quot;Piso 2&quot;'
+    );
   });
 });
