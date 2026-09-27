@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import Ajv from 'ajv';
-import type { ErrorObject, ValidateFunction } from 'ajv';
+// Draft 2020-12: es el que declaran las plantillas del backend. La clase por defecto de 'ajv' sólo
+// conoce Draft-07 y falla al compilar un schema con ese $schema (PLAN-75).
+import Ajv from 'ajv/dist/2020';
+import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
 import type { JsonSchema, ValidationError, ValidationResult } from './types';
 
